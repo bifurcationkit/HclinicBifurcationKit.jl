@@ -214,7 +214,6 @@ function getTestsforHHS(𝐇𝐨𝐦, J, z, xₛ, x₀, x₁, T::Ty, pars; tol =
 			OFS *= -1
 		end
 
-
 		_ii = argmax(abs(v) for v in ζ★₁ᵘ)
 		# ζ★₁ᵘ .*= sign(real(ζ★₁ᵘ[_ii]))
 		OFU = dot(real(ζ★₁ᵘ), x₀ - xₛ) #* exp(real(λ₁) * T)
@@ -226,37 +225,6 @@ function getTestsforHHS(𝐇𝐨𝐦, J, z, xₛ, x₀, x₁, T::Ty, pars; tol =
 	# inclination flip
 	IFU = 1
 	IFS = 1
-
-	# bvpJac = ForwardDiff.jacobian(t -> 𝐇𝐨𝐦.bvp(t, pars), vcat(z.x[1],T))
-	# homJac = ForwardDiff.jacobian(t -> 𝐇𝐨𝐦(t, pars), z)
-	# Ys = z.x[3]			#   stable part for CIS algo
-	# Yu = z.x[4]			# unstable part for CIS algo
-	# Qu1⊥ = 𝐇𝐨𝐦.Qu0 * vcat(-Yu', I(size(Yu,1)))
-	# Qs1⊥ = 𝐇𝐨𝐦.Qs0 * vcat(-Ys', I(size(Ys,1)))
-
-	# n_bvp = length(z.x[1])
-	# n = length(z.x[2])
-	# 𝐀 = homJac[1:n_bvp-n, 1:n_bvp]
-	# @warn "You need 2 parameters here"
-	# 𝐀 = vcat(𝐀, homJac[end-2-n:end-3, 1:n_bvp])
-	# psiold = rand(size(𝐀,1))
-    # phiold = rand(size(𝐀,1))
-    # 𝐁 = [𝐀 psiold; phiold' 0];
-	#
-	# phitemp = 𝐁 \ vcat(zeros(size(𝐀,1)),1);
-	# # phinew = phitemp[1:end-1]
-	#
-	# psitemp = 𝐁' \ vcat(zeros(size(𝐀,1)),1);
-	# # psinew = psitemp[1:end-1]
-	#
-	# ζ1 = psitemp[1:n]
-	# ζ2 = psitemp[n_bvp-n+1:n_bvp]
-	#
-	# IFU =  dot(real(ζ₁ˢ), ζ2)
-	# IFS = -dot(real(ζ₁ᵘ), ζ1)
-
-
-
 
 	𝐇𝐨𝐦.test = (;NNS, NSF, NFF, DRS, DRU, NDS, NDU, TLS, TLU, NCH, SH, BT, OFU, OFS, IFU, IFS)
 	# for (n,v) in pairs(𝐇𝐨𝐦.test)
