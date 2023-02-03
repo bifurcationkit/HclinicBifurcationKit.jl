@@ -128,11 +128,11 @@ _sol = getHomoclinicOrbit(br_hom.prob.VF.F, br_hom.sol[end].x, BK.setParam(br_ho
 ########################
 br_hom = continuation(prob, btpt,
 	# ShootingProblem(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2)]; abstol = 1e-12, reltol = 1e-11),
-	ShootingProblem(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2) for _ in 1:5]; abstol = 1e-13, reltol = 1e-11, parallel = true),
+	ShootingProblem(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2) for _ in 1:5]; abstol = 1e-13, reltol = 1e-11, parallel = false),
 	# PALC(tangent = Bordered()),
 	PALC(),
 	# MoorePenrose(),
-	setproperties(optc_hom, maxSteps = 100, saveSolEveryStep = 1, dsmax = 9e-1, plotEveryStep = 1, detectEvent=0);
+	setproperties(optc_hom, maxSteps = 10, saveSolEveryStep = 1, dsmax = 9e-1, plotEveryStep = 1, detectEvent=0);
 	amplitude = 5e-3, ϵ0 = 2e-4,
 	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
 	freeparams = ((@lens _.T), (@lens _.ϵ1)),
