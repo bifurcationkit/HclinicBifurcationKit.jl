@@ -1,7 +1,7 @@
 # using Revise
 # using Plots
 using Test
-using BifurcationKit, LinearAlgebra, Setfield, SparseArrays, ForwardDiff, Parameters, HclinicBifurcationKit
+using BifurcationKit, LinearAlgebra, Setfield, ForwardDiff, Parameters, HclinicBifurcationKit
 const BK = BifurcationKit
 norminf(x) = norm(x, Inf)
 
