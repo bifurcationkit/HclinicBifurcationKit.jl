@@ -5,8 +5,6 @@ module HclinicBifurcationKit
 	using RecursiveArrayTools: ArrayPartition
 	const BK = BifurcationKit
 
-	using Infiltrator
-
 
 
 	include("HomProblemPBC.jl")
