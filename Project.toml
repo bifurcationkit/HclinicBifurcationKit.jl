@@ -1,12 +1,13 @@
 name = "HclinicBifurcationKit"
 uuid = "0e751702-a6d5-4e4e-bf0f-194619fbec56"
-authors = ["romain veltz <romain.veltz@inria.fr> and contributors"]
+authors = ["romain veltz <romain.veltz@inria.fr>"]
 version = "0.1.0"
 
 [deps]
 BifurcationKit = "0f109fa4-8a5d-4b75-95aa-f515264e7665"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
@@ -22,7 +23,8 @@ OrdinaryDiffEq = "=6.33.3"
 [extras]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "ForwardDiff", "OrdinaryDiffEq", "Random"]
