@@ -89,7 +89,7 @@ optn_hom = NewtonPar(verbose = false, tol = 1e-10)
 optc_hom = ContinuationPar(newtonOptions = optn_hom, ds = -0.0001, dsmin = 1e-5, plotEveryStep = 1,maxSteps = 100, detectBifurcation = 0, saveSolEveryStep = 1)
 
 ########################
-using DifferentialEquations
+using OrdinaryDiffEq
 
 function plotHom(x,p;k...)
 	𝐇𝐨𝐦 = p.prob
