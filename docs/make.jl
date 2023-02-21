@@ -8,7 +8,7 @@ ENV["GKSwstype"] = "100"
 
 makedocs(doctest = false,
 	sitename = "Homoclinic / Heteroclinic orbits in Julia",
-	format = Documenter.HTML(collapselevel = 1,assets = ["assets/indigo.css"]),
+	format = Documenter.HTML(collapselevel = 1, assets = ["assets/indigo.css"]),
 	# format = DocumenterLaTeX.LaTeX(),
 	authors = "Romain Veltz",
 	pages = Any[

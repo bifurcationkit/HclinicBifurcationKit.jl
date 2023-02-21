@@ -3,7 +3,10 @@
 
 | **Documentation** | **Build Status** | **Downloads** |
 |:-----------------:|:----------------:|:-------------:|
-| [![docs-dev][docs-dev-img]][docs-dev-url] |  [![Build Status](https://github.com/bifurcationkit/HclinicBifurcationKit.jl/workflows/CI/badge.svg)](https://github.com/bifurcationkit/HclinicBifurcationKit.jl/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/bifurcationkit/HclinicBifurcationKit.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/bifurcationkit/HclinicBifurcationKit.jl)|  |
+| [![docs-dev][docs-dev-img]][docs-dev-url] |  [![Build Status](https://github.com/bifurcationkit/HclinicBifurcationKit.jl/workflows/CI/badge.svg)](https://github.com/bifurcationkit/HclinicBifurcationKit.jl/actions?query=workflow%3ACI) [![codecov](https://codecov.io/gh/bifurcationkit/HclinicBifurcationKit.jl/branch/main/graph/badge.svg?token=219HJEG8GM)](https://codecov.io/gh/bifurcationkit/HclinicBifurcationKit.jl)
+
+copy
+HTML|  |
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable
