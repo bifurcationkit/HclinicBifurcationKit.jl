@@ -17,8 +17,9 @@ Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 [compat]
 BifurcationKit = "0.2.5"
 ForwardDiff = "^0.10"
-julia = "1"
+Infiltrator = "1"
 OrdinaryDiffEq = "=6.33.3"
+julia = "1"
 
 [extras]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
