@@ -22,7 +22,7 @@ This function generates an initial guess for the solution of the problem `pb` ba
 """
 function generateHomoclinicSolution(pb::PeriodicOrbitOCollProblem, orbit, T)
 	n, _m, Ntst = size(pb)
-	ts = getTimes(pb)
+	ts = BK.getTimes(pb)
 	Nt = length(ts)
 	ci = zeros(eltype(pb), n, Nt)
 	for (l, t) in pairs(ts)
@@ -235,7 +235,7 @@ function generateHomProblem(coll::PeriodicOrbitOCollProblem,
 end
 
 function generateHomProblem(coll::PeriodicOrbitOCollProblem,
-							x::NamedTuple{(:mesh, :sol), Tuple{Vector{Tp}, Vector{Tp}}},
+							x::NamedTuple{(:mesh, :sol, :_mesh), Tuple{Vector{Tp}, Vector{Tp}, Vector{Tp}}},
 							pars,
 							lensHom::Lens; k...) where Tp
 	n,m,_ = size(coll)
