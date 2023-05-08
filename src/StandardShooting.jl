@@ -20,7 +20,7 @@ SectionSSmax(n,c) = SectionSSmax(n,c,0)
 (sect::SectionSSmax)(u::AbstractMatrix, T) = BK.sectionShooting(u[:,sect.ind], T, sect.normal, sect.center)
 
 # we update the field of Section, useful during continuation procedure for updating the section
-function update!(sect::SectionSSmax, normal, center, ind)
+function BK.update!(sect::SectionSSmax, normal, center, ind)
 	copyto!(sect.normal, normal)
 	copyto!(sect.center, center)
 	sect.ind = ind
@@ -28,10 +28,10 @@ function update!(sect::SectionSSmax, normal, center, ind)
 end
 
 # this function updates the section during the continuation run
-function BK.updateSection!(sh::ShootingProblem{Tf, Ts, Tsection }, x, par) where {Tf <: BK.AbstractFlow, Ts, Tsection <: SectionSSmax}
+function BK.updateSection!(sh::ShootingProblem{Tf, Tjac, Ts, Tsection }, x, par) where {Tf <: BK.AbstractFlow, Tjac <: BK.AbstractJacobianType, Ts, Tsection <: SectionSSmax}
 	xt = BK.getTimeSlices(sh, x)
 	ind = argmax(norm(xt[:, i]) for i=1:size(xt, 2))
-	@views update!(sh.section, BK.vf(sh.flow, xt[:, ind], par), xt[:, ind], ind)
+	@views BK.update!(sh.section, BK.vf(sh.flow, xt[:, ind], par), xt[:, ind], ind)
 	sh.section.normal ./= norm(sh.section.normal)
 	return true
 end

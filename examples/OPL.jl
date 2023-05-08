@@ -109,7 +109,7 @@ br_coll = continuation(
 		end,
 	normC = norminf)
 
-_sol = getPeriodicOrbit(br_coll.prob.prob, br_coll.sol[end].x,0)
+_sol = getPeriodicOrbit(br_coll.prob.prob, br_coll.sol[end].x, 0)
 		plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1)
 
 ####################################################################################################
@@ -201,7 +201,7 @@ br_sh = continuation(
 		end,
 	normC = norminf)
 
-_sol = getPeriodicOrbit(br_sh.prob.prob, br_sh.sol[end].x, BK.setParam(br_sh,  br_sh.sol[end].p))
+_sol = getPeriodicOrbit(br_sh.prob.prob, br_sh.sol[end].x, br_sh.sol[end].p)
 		plot(_sol.t, _sol[:,:]')
 
 #######################################

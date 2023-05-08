@@ -71,7 +71,7 @@ btpt = getNormalForm(sn_br, 2; nev = 3, autodiff = false)
 br_hom_c = continuation(
 			prob,
 			btpt,
-			PeriodicOrbitOCollProblem(50, 3; meshadapt = true, K = 100),
+			PeriodicOrbitOCollProblem(50, 3; meshadapt = true, K = 200),
 			PALC(tangent = Bordered()),
 			setproperties(opts_br, maxSteps = 130, saveSolEveryStep = 1, dsmax = 1e-2, plotEveryStep = 1, pMin = -1.01, ds = 0.01, detectEvent = 0, detectBifurcation = 0);
 	verbosity = 1, plot = true,
@@ -110,8 +110,8 @@ opts_po_cont = ContinuationPar(dsmax = 0.05, ds= -0.001, dsmin = 1e-4, pMax = 1.
 
 br_coll = continuation(
 	br, 4, opts_po_cont,
-	PeriodicOrbitOCollProblem(50, 4; meshadapt = true, updateSectionEveryStep = 2);
-	ampfactor = 1., δp = 0.01,
+	PeriodicOrbitOCollProblem(50, 4; meshadapt = false, updateSectionEveryStep = 2);
+	ampfactor = 1., δp = 0.001,
 	verbosity = 2,	plot = true,
 	alg = PALC(tangent = Bordered()),
 	recordFromSolution = recordPO,
@@ -127,7 +127,7 @@ br_coll = continuation(
 		end,
 	normC = norminf)
 
-_sol = getPeriodicOrbit(br_coll.prob.prob, br_coll.sol[end].x,0)
+_sol = getPeriodicOrbit(br_coll.prob.prob, br_coll.sol[end].x, 0)
 		plot(_sol.t, _sol[:,:]')
 ####################################################################################################
 # homoclinic
@@ -185,8 +185,8 @@ opts_po_cont = ContinuationPar(dsmax = 0.15, ds= -0.0001, dsmin = 1e-4, pMax = 1
 
 br_sh = continuation(
 	br, 4, opts_po_cont,
-	ShootingProblem(10, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12);
-	ampfactor = 1., δp = 0.01,
+	ShootingProblem(10, probsh, Rodas5P(); parallel = false);
+	ampfactor = 1.0, δp = 0.001,
 	verbosity = 2,	plot = true,
 	recordFromSolution = recordPO,
 	plotSolution = (x, p; k...) -> begin

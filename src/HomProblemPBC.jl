@@ -387,7 +387,7 @@ function BK.continuation(prob_vf,
 			testInclinationFlip = false,
 			kwargs...
 			)
-	printstyled(color=:magenta, "\n\n############################\n┌─ Debut Hom_BT init\n")
+	printstyled(color=:magenta, "\n\n────────────────────────────\n┌─ Debut Hom_BT init\n")
 
 	Hom = predictor(bt, Val(:HomoclinicCurve), 0.)
 	ϵ = sqrt(amplitude * abs(bt.nf.a) / 6)
