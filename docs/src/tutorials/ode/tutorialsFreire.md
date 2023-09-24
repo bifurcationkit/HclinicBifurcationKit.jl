@@ -23,7 +23,6 @@ using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-norminf(x) = norm(x, Inf)
 recordFromSolution(x, p) = (x = x[1], y = x[2])
 
 function freire!(dz, u, p, t)
@@ -39,7 +38,7 @@ freire(z, p) = freire!(similar(z), z, p, 0)
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
 z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
-prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); recordFromSolution = recordFromSolution)
+prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
 
 nothing #hide
 ```
@@ -47,7 +46,7 @@ nothing #hide
 We first compute the branch of equilibria
 
 ```@example TUTFREIRE
-opts_br = ContinuationPar(pMin = -1.4, pMax = 2.8, ds = 0.001, dsmax = 0.05, nInversion = 6, detectBifurcation = 3, maxBisectionSteps = 25, nev = 3)
+opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3)
 
 br = continuation(prob, PALC(tangent = Bordered()), opts_br, normC = norminf)
 
@@ -64,18 +63,18 @@ br
 
 
 ```@example TUTFREIRE
-sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detectBifurcation = 1, saveSolEveryStep = 1, dsmax = 0.01, maxSteps = 80) ;
+sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
 	alg = PALC(),
-	detectCodim2Bifurcation = 2,
-	startWithEigen = true,
-	updateMinAugEveryStep = 1,
+	detect_codim2_bifurcation = 2,
+	start_with_eigen = true,
+	update_minaug_every_step = 1,
 	bothside = true,
 	)
 
-hopf_br = continuation(br, 4, (@lens _.ν), ContinuationPar(opts_br, detectBifurcation = 1, saveSolEveryStep = 1, maxSteps = 140, dsmax = 0.02, nInversion = 6),
-	detectCodim2Bifurcation = 2,
-	startWithEigen = true,
-	updateMinAugEveryStep = 1,
+hopf_br = continuation(br, 4, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
+	detect_codim2_bifurcation = 2,
+	start_with_eigen = true,
+	update_minaug_every_step = 1,
 	bothside = true,
 	)
 
@@ -89,9 +88,9 @@ Plotting function:
 ```@example TUTFREIRE
 function plotHom(x,p;k...)
 	𝐇𝐨𝐦 = p.prob
-	par0 = set(BK.getParams(𝐇𝐨𝐦), BK.getLens(𝐇𝐨𝐦), x.x[end][1])
+	par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
 	par0 = set(par0, p.lens, p.p)
-	sol = getHomoclinicOrbit(𝐇𝐨𝐦, x, par0)
+	sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
 	m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
 	plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
 end
@@ -101,46 +100,26 @@ Branching from BT point
 
 ```@example TUTFREIRE
 # Bogdanov-Takens bifurcation point
-btpt = getNormalForm(sn_br, 2; nev = 3, autodiff = false)
+btpt = get_normal_form(sn_br, 2; nev = 3, autodiff = false)
 
 # curve of homoclinics
 br_hom_c = continuation(
 			prob,
 			btpt,
 			# we use mesh adaptation
-			PeriodicOrbitOCollProblem(50, 3; meshadapt = true, K = 100),
+			PeriodicOrbitOCollProblem(50, 3; meshadapt = false, K = 200),
 			PALC(tangent = Bordered()),
-			setproperties(opts_br, maxSteps = 8, saveSolEveryStep = 1, dsmax = 1e-2, plotEveryStep = 1, pMin = -1.01, ds = 0.01, detectEvent = 2, detectBifurcation = 0);
-	verbosity = 1, plot = true,
-	ϵ0 = 1e-5, amplitude = 2e-3,
-	# freeparams = ((@lens _.T), (@lens _.ϵ1),)
-	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
-	freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
-	normC = norminf,
-	plotSolution = plotHom,
-	updateEveryStep = 4,
-	)
-title!("")	
-```
-
-```@example TUTFREIRE
-br_hom_c = continuation(
-			prob,
-			btpt,
-			# we use mesh adaptation
-			PeriodicOrbitOCollProblem(50, 3; meshadapt = true, K = 100),
-			PALC(tangent = Bordered()),
-			setproperties(opts_br, maxSteps = 130, saveSolEveryStep = 1, dsmax = 1e-2, plotEveryStep = 1, pMin = -1.01, ds = 0.01, detectEvent = 2, detectBifurcation = 0);
+			setproperties(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
 	verbosity = 0, plot = false,
 	ϵ0 = 1e-5, amplitude = 2e-3,
 	# freeparams = ((@lens _.T), (@lens _.ϵ1),)
 	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
 	freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
 	normC = norminf,
-	updateEveryStep = 4,
+	update_every_step = 4,
 	)
 plot(sn_br, hopf_br, ylims = (0, 1.25), branchlabel = ["SN", "HOPF"])
-	plot!(br_hom_c, branchlabel = "Hom")
+plot!(br_hom_c, branchlabel = "Hom")
 ```
 
 ## Branch of homoclinic orbits with Multiple Shooting
@@ -149,26 +128,26 @@ plot(sn_br, hopf_br, ylims = (0, 1.25), branchlabel = ["SN", "HOPF"])
 using DifferentialEquations
 probsh = ODEProblem(freire!, copy(z0), (0., 1000.), par_freire; abstol = 1e-12, reltol = 1e-10)
 
-optn_hom = NewtonPar(verbose = true, tol = 1e-10, maxIter = 7)
-optc_hom = ContinuationPar(newtonOptions = optn_hom, ds = 1e-4, dsmin = 1e-6, dsmax = 1e-3, plotEveryStep = 1,maxSteps = 10, detectBifurcation = 0, saveSolEveryStep = 1)
+optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 7)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1,max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
 
 br_hom_sh = continuation(
 			prob,
 			btpt,
 			ShootingProblem(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
 			PALC(tangent = Bordered()),
-			setproperties(optc_hom, maxSteps = 200, saveSolEveryStep = 1, ds = 1e-3, dsmax = 3e-2, plotEveryStep = 50, detectEvent = 2, a = 0.9, pMin = -1.01);
+			setproperties(optc_hom, max_steps = 200, save_sol_every_step = 1, ds = 1e-3, dsmax = 3e-2, plot_every_step = 50, detect_event = 2, a = 0.9, p_min = -1.01);
 	verbosity = 1, plot = true,
 	ϵ0 = 1e-6, amplitude = 2e-2,
-	updateEveryStep = 2,
+	update_every_step = 2,
 	# freeparams = ((@lens _.T), (@lens _.ϵ1),),
 	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
 	# freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
 	freeparams = ((@lens _.T),),
 	normC = norminf,
-	plotSolution = plotHom,
+	plot_solution = plotHom,
 	maxT = 45.,
-	callbackN = BK.cbMaxNorm(1e1),
+	callback_newton = BK.cbMaxNorm(1e1),
 	)
 title!("")
 ```

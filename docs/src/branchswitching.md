@@ -22,4 +22,4 @@ continuation(prob_vf,
 	kwargs...)
 ```
 
-Note that the BT has been detected during Fold or Hopf continuation. More information is available at [`continuation`](@ref)
+Note that the BT has been detected during Fold or Hopf continuation. More information is available at [`continuation`](@ref).

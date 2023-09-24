@@ -29,9 +29,9 @@ BifurcationKit.continuation(prob_vf,
 			ϵ0 = 1e-5, amplitude = 1e-3,
 			freeparams = ((@lens _.ϵ0), (@lens _.T)),
 			maxT = Inf,
-			updateEveryStep = 1,
-			testOrbitFlip = false,
-			testInclinationFlip = false,
+			update_every_step = 1,
+			test_orbit_flip = false,
+			test_inclination_flip = false,
 			kwargs...
 			)
 ```
@@ -39,11 +39,11 @@ BifurcationKit.continuation(prob_vf,
 ## Utils 
 
 ```@docs
-generateHomProblem
+generate_hom_problem
 ```
 
 ```@docs
-getHomoclinicOrbit
+get_homoclinic_orbit
 ```
 
 ## Misc.

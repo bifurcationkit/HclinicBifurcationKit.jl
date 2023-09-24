@@ -39,7 +39,7 @@ Please see the tutorials for examples. In a nutshell, you can compute homolinic 
 
 ## Detection of codim 2 bifurcation points
 
-You can detect the following codim 2 bifurcation points by using the option `detectCodim2Bifurcation` in the method `continuation`. Under the hood, the detection of these bifurcations is done by using Event detection as explained in [Event Handling](https://bifurcationkit.github.io/BifurcationKitDocs.jl/dev/EventCallback/).
+You can detect the following codim 2 bifurcation points by using the option `detect_codim2_bifurcation` in the method `continuation`. Under the hood, the detection of these bifurcations is done by using Event detection as explained in [Event Handling](https://bifurcationkit.github.io/BifurcationKitDocs.jl/dev/EventCallback/).
 
 We refer to [^DeWitte] for a description of the bifurcations.
 

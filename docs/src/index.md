@@ -32,7 +32,7 @@ If you use this package for your work, we ask that you **cite** the following pa
 - compute Homoclinic to Hyperbolic Saddle Orbits (HomHS) using Orthogonal collocation or Standard shooting
 - compute bifurcation of HomHS
 - start HomHS from a direct simulation
-- automatic branch switching to HomHS from Bogdanov-Takes bifurcation point
+- automatic branch switching to HomHS from Bogdanov-Takens bifurcation point
 
 ## Other softwares
 
