@@ -20,14 +20,14 @@ It is easy to encode the ODE as follows
 
 ```@example TUTOPL
 using Revise, Plots
-using Setfield, LinearAlgebra, Test, ForwardDiff
-using BifurcationKit, Test
+using Setfield
+using BifurcationKit
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-recordFromSolution(x, p) = (D₂₃ = x[6], β = x[1],)
+record_from_solution(x, p) = (D₂₃ = x[6], β = x[1],)
 ####################################################################################################
-function OPL!(dz, u, p, t)
+function OPL!(dz, u, p, t = 0)
 	(;b, σ, g, a, D₂₁⁰, D₂₃⁰)  = p
 	β, p₂₁, p₂₃, p₃₁, D₂₁, D₂₃ = u
 	dz[1] = -σ * β + g * p₂₃
@@ -39,10 +39,9 @@ function OPL!(dz, u, p, t)
 	dz
 end
 
-OPL(z, p) = OPL!(similar(z), z, p, 0)
 par_OPL = (b = 1.2, σ = 2.0, g=50., a = 1., D₂₁⁰ = -1., D₂₃⁰ = 0.)
 z0 = zeros(6)
-prob = BK.BifurcationProblem(OPL, z0, par_OPL, (@lens _.a); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(OPL!, z0, par_OPL, (@lens _.a); record_from_solution)
 
 nothing #hide
 ```
@@ -51,12 +50,12 @@ We first compute the branch of equilibria
 
 ```@example TUTOPL
 opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6, plot_every_step = 20, max_steps = 100)
-br = continuation(prob, PALC(tangent = Secant()), opts_br;
+br = continuation(prob, PALC(), opts_br;
 	bothside = false, normC = norminf)
 
 plot(br, plotfold=true)
 
-br2 = continuation(re_make(prob; u0 = [1.6931472491037485, -0.17634826359471437, 0.06772588996414994, -0.23085768742546342, -0.5672243219935907, -0.09634826359471438]), PALC(tangent = Secant()), opts_br; verbosity = 0, bothside = false, normC = norminf)
+br2 = continuation(re_make(prob; u0 = [1.6931472491037485, -0.17634826359471437, 0.06772588996414994, -0.23085768742546342, -0.5672243219935907, -0.09634826359471438]), PALC(), opts_br; verbosity = 0, bothside = false, normC = norminf)
 scene = plot(br, br2)
 ```
 
@@ -109,7 +108,7 @@ end
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 100, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3, save_sol_every_step=1,)
+opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 100, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3)
 
 br_coll = continuation(
 	# br, 2,
@@ -123,7 +122,7 @@ br_coll = continuation(
 	plot_solution = (x, p; k...) -> begin
 		plotPO(x, p; k...)
 		## add previous branch
-		plot!(br, subplot=1, putbifptlegend = false)
+		plot!(br,  subplot=1, putbifptlegend = false)
 		plot!(br2, subplot=1, putbifptlegend = false)
 		end,
 	finalise_solution = (z, tau, step, contResult; prob = nothing, kwargs...) -> begin
@@ -186,10 +185,10 @@ br_hom_c = continuation(
 	)
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-plot!(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
+plot!(hopf_br,  branchlabel = "AH₀",  vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "AH₁₂", vars = (:a, :b))
-plot!(br_hom_c, branchlabel = "H₀", vars = (:a, :b))
-ylims!(0,1.5)
+plot!(br_hom_c, branchlabel = "H₀",   vars = (:a, :b))
+ylims!(0.1,1.5)
 ```
 
 
@@ -203,7 +202,7 @@ probsh = ODEProblem(OPL!, copy(z0), (0., 1000.), par_OPL; abstol = 1e-12, reltol
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0, plot_every_step = 10, save_sol_every_step=1)
+opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0)
 
 br_sh = continuation(
 	# br, 2,
@@ -227,7 +226,7 @@ br_sh = continuation(
 	normC = norminf)
 
 _sol = get_periodic_orbit(br_sh.prob.prob, br_sh.sol[end].x, BK.setparam(br_sh,  br_sh.sol[end].p))
-plot(_sol.t, _sol[:,:]')
+plot(_sol.t, _sol[1:3,:]')
 ```
 
 ```@example TUTOPL
@@ -250,12 +249,12 @@ _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
 plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0)
 
 br_hom_sh = continuation(
 			deepcopy(probhom), solh, (@lens _.b),
 			PALC(),
-			setproperties(optc_hom, max_steps = 600, save_sol_every_step = 1, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
+			setproperties(optc_hom, max_steps = 300, save_sol_every_step = 1, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
 	verbosity = 3, plot = true,
 	callback_newton = BK.cbMaxNorm(1e0),
 	normC = norminf,
