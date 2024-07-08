@@ -1,5 +1,5 @@
 using Revise, Plots
-using Parameters, Setfield, LinearAlgebra, Test, ForwardDiff
+using LinearAlgebra, Test
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
@@ -7,7 +7,7 @@ const BK = BifurcationKit
 recordFromSolution(x, p) = (x = x[1], y = x[2])
 ####################################################################################################
 function freire!(dz, u, p, t)
-    @unpack ν, β, A₃, B₃, r, ϵ = p
+    (;ν, β, A₃, B₃, r, ϵ) = p
     x, y, z = u
     dz[1] = (-ν*x + β*(y-x) - A₃*x^3 + B₃*(y-x)^3 + ϵ)/r
     dz[2] =    -β*(y-x) - z - B₃*(y-x)^3
@@ -21,15 +21,14 @@ z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
 prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
 
-opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3, max_steps = 2000)
-@set! opts_br.newton_options.verbose = false
-br = continuation(prob, PALC(tangent = Bordered()), opts_br; verbosity = 0,
-    bothside = false, normC = norminf)
+opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, max_bisection_steps = 25, nev = 3, max_steps = 2000)
+br = continuation(prob, PALC(tangent = Bordered()), opts_br;
+bothside = false, normC = norminf)
 
 plot(br, plotfold=true)
 ####################################################################################################
 # DefCon
-alg = BK.DefCont(deflation_operator = DeflationOperator(2, dot, .001, [z0]), perturb_solution = (x,p,id) -> (x  .+ 0.03 .* rand(length(x))))
+alg = DefCont(deflation_operator = DeflationOperator(2, dot, .001, [z0]), perturb_solution = (x,p,id) -> (x  .+ 0.03 .* rand(length(x))))
 
 opts_br_dc = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.01, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3, plot_every_step = 100, max_steps = 1000)
 @set! opts_br_dc.newton_options.verbose = false
@@ -61,7 +60,7 @@ function plotHom(x,p;k...)
     par0 = set(par0, p.lens, p.p)
     sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
     m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
-    plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
+    plot!(sol.t, sol[1:3,:]',subplot=3, markersize = 1, marker=m)
 end
 
 btpt = get_normal_form(sn_br, 2; nev = 3, autodiff = false)
@@ -71,8 +70,8 @@ br_hom_c = continuation(
             btpt,
             PeriodicOrbitOCollProblem(50, 3; meshadapt = false, K = 200),
             PALC(tangent = Bordered()),
-            setproperties(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
-    verbosity = 1, plot = true,
+            ContinuationPar(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
+    verbosity = 1, plot = false,
     ϵ0 = 1e-5, amplitude = 2e-3,
     # freeparams = ((@lens _.T), (@lens _.ϵ1),)
     # freeparams = ((@lens _.T), (@lens _.ϵ0)),
@@ -104,7 +103,7 @@ end
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 1.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3, save_sol_every_step=1,)
+opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 1.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3)
 
 br_coll = continuation(
     br, 4, opts_po_cont,
@@ -156,7 +155,7 @@ solh.x[2] .=0
 br_hom_c = continuation(
             deepcopy(probhom), solh, (@lens _.ν),
             PALC(tangent = Bordered()),
-            setproperties(optc_hom, max_steps = 130, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1);
+            ContinuationPar(optc_hom, max_steps = 130, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1);
     verbosity = 4, plot = true,
     normC = norminf,
     plot_solution = plotHom,
@@ -172,7 +171,7 @@ _sol = get_homoclinic_orbit(probhom, br_hom_c.sol[end].x, BK.setparam(br_hom_c, 
 plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[:,:]'))
 ####################################################################################################
 # same with shooting
-using DifferentialEquations
+using OrdinaryDiffEq
 probsh = ODEProblem(freire!, copy(z0), (0., 1000.), par_freire; abstol = 1e-12, reltol = 1e-10)
 
 # newton parameters
@@ -200,7 +199,7 @@ br_sh = continuation(
     normC = norminf)
 
 _sol = get_periodic_orbit(br_sh.prob.prob, br_sh.sol[end].x, BK.setparam(br_sh,  br_sh.sol[end].p))
-plot(_sol.t, _sol[:,:]')
+plot(_sol.t, _sol[1:3,:]')
 #######################################
 # homoclinic
 probhom, solh = generate_hom_problem(
@@ -217,10 +216,10 @@ probhom, solh = generate_hom_problem(
     # freeparams = ((@lens _.T),),
     )
 
-solh.x[2] .=0
+solh.x[2] .= 0
 
-_sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
-plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[:,:]'))
+_sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom))
+plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:3,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 7)
 optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1,max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
@@ -229,15 +228,15 @@ br_hom_sh = continuation(
             deepcopy(probhom), solh, (@lens _.ν),
             PALC(tangent = Bordered()),
             # MoorePenrose(),
-            setproperties(optc_hom, max_steps = 30, save_sol_every_step = 1, dsmax = 3e-2, plot_every_step = 10, detect_event = 2);
+            ContinuationPar(optc_hom, max_steps = 30, save_sol_every_step = 1, dsmax = 3e-2, plot_every_step = 10, detect_event = 2);
     verbosity = 4, plot = true,
     callback_newton = BK.cbMaxNorm(1e1),
     normC = norminf,
     plot_solution = plotHom,
     )
 
-_sol = get_homoclinic_orbit(br_hom_sh.prob.VF.F, br_hom_sh.sol[end].x, BK.setparam(br_hom_sh, br_hom_sh.sol[end].p); saveat=.1)
-plot(_sol.t, _sol[:,:]')
+_sol = get_homoclinic_orbit(br_hom_sh.prob.VF.F, br_hom_sh.sol[end].x, BK.setparam(br_hom_sh, br_hom_sh.sol[end].p))
+plot(_sol.t, _sol[1:3,:]')
 
 plot(hopf_br, br_hom_c, br_hom_sh)
 
@@ -247,7 +246,7 @@ br_hom_sh = continuation(
             btpt,
             ShootingProblem(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
             PALC(tangent = Bordered()),
-            setproperties(optc_hom, max_steps = 15000, save_sol_every_step = 1, ds = 1e-3, dsmax = 3e-2, plot_every_step = 50, detect_event = 2, a = 0.9, p_min = -1.01);
+            ContinuationPar(optc_hom, max_steps = 15000, save_sol_every_step = 1, ds = 1e-3, dsmax = 3e-2, plot_every_step = 50, detect_event = 2, a = 0.9, p_min = -1.01);
     verbosity = 1, plot = true,
     ϵ0 = 1e-6, amplitude = 2e-2,
     update_every_step = 2,

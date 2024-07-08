@@ -1,5 +1,5 @@
 using Revise, Plots
-using Parameters, Setfield, LinearAlgebra, Test, ForwardDiff
+using LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
@@ -7,7 +7,7 @@ const BK = BifurcationKit
 recordFromSolution(x, p) = (D₂₃ = x[6], β = x[1],)
 ####################################################################################################
 function OPL!(dz, u, p, t)
-    @unpack b, σ, g, a, D₂₁⁰, D₂₃⁰  = p
+    (;b, σ, g, a, D₂₁⁰, D₂₃⁰)  = p
     β, p₂₁, p₂₃, p₃₁, D₂₁, D₂₃ = u
     dz[1] = -σ * β + g * p₂₃
     dz[2] = -p₂₁ - β * p₃₁ + a * D₂₁
@@ -24,13 +24,13 @@ z0 = zeros(6)
 prob = BK.BifurcationProblem(OPL, z0, par_OPL, (@lens _.a); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 6, plot_every_step = 20, max_steps = 100, save_sol_every_step = 1, detect_fold = true)
-    opts_br = @set opts_br.newton_options.verbose = false
-    br = continuation(prob, PALC(tangent = Secant()), opts_br;
+br = continuation(prob, PALC(tangent = Secant()), opts_br;
     bothside = false, normC = norminf)
 
 plot(br, plotfold=true)
 
-br2 = continuation(re_make(prob; u0 = [1.6931472491037485, -0.17634826359471437, 0.06772588996414994, -0.23085768742546342, -0.5672243219935907, -0.09634826359471438]), PALC(tangent = Secant()), opts_br; verbosity = 0, bothside = false, normC = norminf)
+br2 = continuation(br, 1)
+
 plot(br, br2)
 ####################################################################################################
 sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 80) ;
@@ -90,7 +90,7 @@ br_coll = continuation(
     # br, 2,
     br2, 1,
     opts_po_cont,
-    PeriodicOrbitOCollProblem(20, 4; meshadapt = true, update_section_every_step = 2);
+    PeriodicOrbitOCollProblem(40, 4; meshadapt = true, update_section_every_step = 2);
     ampfactor = 1., δp = 0.0015,
     verbosity = 2,    plot = true,
     alg = PALC(tangent = Bordered()),
@@ -108,14 +108,13 @@ br_coll = continuation(
         end,
     normC = norminf)
 
-_sol = get_periodic_orbit(br_coll.prob.prob, br_coll.sol[end].x, nothing)
-plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1)
-
+_sol = get_periodic_orbit(br_coll, length(br_coll))
+BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1, title = "Last periodic orbit on branch")
 ####################################################################################################
 # homoclinic
 probhom, solh = generate_hom_problem(
     setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
-    br_coll.sol[end].x,
+    br_coll.sol[end].x.sol,
     BK.setparam(br_coll, br_coll.sol[end].p),
     BK.getlens(br_coll);
     update_every_step = 4,
@@ -134,7 +133,7 @@ probhom, solh = generate_hom_problem(
 #####
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom);)
-plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1)
+plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1, title = "Initial guess for homoclinic orbit")
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 5)
 optc_hom = ContinuationPar(newton_options = optn_hom, ds = -0.0001, dsmin = 1e-5, plot_every_step = 10, max_steps = 100, detect_bifurcation = 0, detect_event = 2, save_sol_every_step = 1, p_min = -1.01)
@@ -159,8 +158,8 @@ br_hom_c = continuation(
     end,
     )
 
-using PrettyTables
-br_hom_c.branch |> pretty_table
+
+br_hom_c.branch |> vscodedisplay
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
 plot!(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
@@ -169,7 +168,7 @@ plot!(br_hom_c, branchlabel = "H₀", vars = (:a, :b))
 ylims!(0,1.5)
 ####################################################################################################
 # same with shooting
-using DifferentialEquations
+using OrdinaryDiffEq
 probsh = ODEProblem(OPL!, copy(z0), (0., 1000.), par_OPL; abstol = 1e-12, reltol = 1e-10)
 
 # newton parameters
@@ -200,8 +199,8 @@ br_sh = continuation(
         end,
     normC = norminf)
 
-_sol = get_periodic_orbit(br_sh.prob.prob, br_sh.sol[end].x, br_sh.sol[end].p)
-plot(_sol.t, _sol[:,:]')
+_sol = get_periodic_orbit(br_sh, length(br_sh))
+plot(_sol)
 
 #######################################
 # homoclinic
@@ -220,7 +219,7 @@ probhom, solh = generate_hom_problem(
     )
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
-plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[:,:]'))
+plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
     optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
@@ -241,12 +240,12 @@ br_hom_sh = continuation(
         par0 = set(par0, (@lens _.b), p.p)
         sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
         m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
-        plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
+        plot!(sol.t, sol[1:6,:]',subplot=3, markersize = 1, marker=m)
     end,
     )
 
 _sol = get_homoclinic_orbit(probhom, br_hom_sh.sol[end].x, BK.setparam(br_hom_sh, br_hom_sh.sol[end].p); saveat=.1)
-plot(_sol.t, _sol[:,:]')
+plot(_sol.t, _sol[1:6,:]')
 
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )

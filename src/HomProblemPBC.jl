@@ -50,7 +50,8 @@ end
 function HomoclinicHyperbolicProblemPBC(bvp::Tbvp,
                 lens::Tlens,
                 N::Int,
-                J::AbstractMatrix{Ty}; ϵ0 = 0.01,
+                J::AbstractMatrix{Ty}; 
+                ϵ0 = 0.01,
                 ϵ1 = 0.01,
                 T = 100.,
                 freeparams = ((@lens _.ϵ0), (@lens _.T)),
@@ -103,7 +104,7 @@ end
 # we follow De Witte, Virginie, Willy Govaerts, Yuri A. Kuznetsov, and Mark Friedman. “Interactive Initialization and Continuation of Homoclinic and Heteroclinic Orbits in MATLAB.” ACM Transactions on Mathematical Software 38, no. 3 (April 2012): 1–34. https://doi.org/10.1145/2168773.2168776.
 
 @views function ricattiBlocks(Q, J, n)
-    #TODO  Faire  inplace
+    #TODO  make inplace
     T = Q' * J * Q
     T11  = T[1:n, 1:n]
     T12  = T[1:n, n+1:end]
@@ -237,7 +238,7 @@ end
 """
 $(SIGNATURES)
 
-This is the continuation method for computing a homoclinic solution to a hyperbolic saddle. The parameter lens is the one from `prob_vf::BifurcationProblem`.
+This is the continuation method for computing an homoclinic solution to a hyperbolic saddle. The parameter lens is the one from `prob_vf::BifurcationProblem`.
 
 # Arguments
 
@@ -389,7 +390,7 @@ function BK.continuation(prob_vf,
             test_inclination_flip = false,
             kwargs...
             )
-    printstyled(color=:magenta, "\n\n────────────────────────────\n┌─ Debut Hom_BT init\n")
+    printstyled(color=:magenta, "\n\n────────────────────────────\n┌─ Start Hom_BT init\n")
 
     Hom = predictor(bt, Val(:HomoclinicCurve), 0.)
     ϵ = sqrt(amplitude * abs(bt.nf.a) / 6)

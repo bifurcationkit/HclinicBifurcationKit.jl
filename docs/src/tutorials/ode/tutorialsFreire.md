@@ -18,7 +18,7 @@ It is easy to encode the ODE as follows
 
 ```@example TUTFREIRE
 using Revise, Plots
-using Parameters, Setfield, LinearAlgebra, Test, ForwardDiff
+using Setfield, LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
@@ -26,7 +26,7 @@ const BK = BifurcationKit
 recordFromSolution(x, p) = (x = x[1], y = x[2])
 
 function freire!(dz, u, p, t)
-	@unpack ν, β, A₃, B₃, r, ϵ = p
+	(;ν, β, A₃, B₃, r, ϵ) = p
 	x, y, z = u
 	dz[1] = (-ν*x + β*(y-x) - A₃*x^3 + B₃*(y-x)^3 + ϵ)/r
 	dz[2] =	-β*(y-x) - z - B₃*(y-x)^3
@@ -92,7 +92,7 @@ function plotHom(x,p;k...)
 	par0 = set(par0, p.lens, p.p)
 	sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
 	m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
-	plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
+	plot!(sol.t, sol[1:3,:]',subplot=3, markersize = 1, marker=m)
 end
 ```
 

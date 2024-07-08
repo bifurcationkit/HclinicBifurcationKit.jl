@@ -1,5 +1,5 @@
 # using Revise, Plots, AbbreviatedStackTraces
-using Parameters, Setfield, LinearAlgebra, Test, ForwardDiff
+using Setfield, LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
@@ -7,7 +7,7 @@ const BK = BifurcationKit
 recordFromSolution(x, p) = (x = x[1], y = x[2])
 ####################################################################################################
 function freire!(dz, u, p, t)
-    @unpack ν, β, A₃, B₃, r, ϵ = p
+    (;ν, β, A₃, B₃, r, ϵ) = p
     x, y, z = u
     dz[1] = (-ν*x + β*(y-x) - A₃*x^3 + B₃*(y-x)^3 + ϵ)/r
     dz[2] =    -β*(y-x) - z - B₃*(y-x)^3
@@ -22,8 +22,7 @@ z0 = zeros(3)
 prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3, max_steps = 2000)
-    @set! opts_br.newton_options.verbose = false
-    br = continuation(prob, PALC(tangent = Bordered()), opts_br; verbosity = 0,
+br = continuation(prob, PALC(tangent = Bordered()), opts_br; verbosity = 0,
     bothside = false, normC = norminf)
 
 # plot(br, plotfold=true)
@@ -47,7 +46,7 @@ end
 optn_po = NewtonPar(verbose = false, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.05, ds= -0.001, dsmin = 1e-4, p_max = 1.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3, save_sol_every_step=1,)
+opts_po_cont = ContinuationPar(dsmax = 0.025, ds= -0.001, dsmin = 1e-4, p_max = 1.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3, save_sol_every_step=1,)
 
 br_coll = continuation(
     br, 4, opts_po_cont,
@@ -71,7 +70,7 @@ br_coll = continuation(
 # homoclinic
 probhom, solh = generate_hom_problem(
     setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
-    br_coll.sol[end].x,
+    br_coll.sol[end].x.sol,
     BK.setparam(br_coll, br_coll.sol[end].p),
     BK.getlens(br_coll);
     update_every_step = 4,

@@ -20,7 +20,7 @@ It is easy to encode the ODE as follows
 
 ```@example TUTOPL
 using Revise, Plots
-using Parameters, Setfield, LinearAlgebra, Test, ForwardDiff
+using Setfield, LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
@@ -28,7 +28,7 @@ const BK = BifurcationKit
 recordFromSolution(x, p) = (D₂₃ = x[6], β = x[1],)
 ####################################################################################################
 function OPL!(dz, u, p, t)
-	@unpack b, σ, g, a, D₂₁⁰, D₂₃⁰  = p
+	(;b, σ, g, a, D₂₁⁰, D₂₃⁰)  = p
 	β, p₂₁, p₂₃, p₃₁, D₂₁, D₂₃ = u
 	dz[1] = -σ * β + g * p₂₃
 	dz[2] =	-p₂₁ - β * p₃₁ + a * D₂₁
@@ -140,31 +140,33 @@ br_coll = continuation(
 			true
 		end,
 	normC = norminf)
+	
+_sol = get_periodic_orbit(br_coll, length(br_coll))
+BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Last periodic orbit on branch")
 ```
 
 ```@example TUTOPL
 probhom, solh = generate_hom_problem(
-	setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
-	br_coll.sol[end].x,
-	BK.setparam(br_coll, br_coll.sol[end].p),
-	BK.getlens(br_coll);
-	update_every_step = 4,
-	verbose = true,
-	# ϵ0 = 1e-7, ϵ1 = 1e-7, # WORK BEST
-	# ϵ0 = 1e-8, ϵ1 = 1e-5, # maxT = 70,
-	t0 = 0., t1 = 120.,
-	# freeparams = ((@lens _.T), (@lens _.ϵ1),)
-	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
-	freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-	# freeparams = ((@lens _.T),),
-	testOrbitFlip = false,
-	testInclinationFlip = false
-	)
-
+    setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
+    br_coll.sol[end].x.sol,
+    BK.setparam(br_coll, br_coll.sol[end].p),
+    BK.getlens(br_coll);
+    update_every_step = 4,
+    verbose = true,
+    # ϵ0 = 1e-7, ϵ1 = 1e-7, # WORK BEST
+    # ϵ0 = 1e-8, ϵ1 = 1e-5, # maxT = 70,
+    t0 = 0., t1 = 120.,
+    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
+    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
+    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
+    # freeparams = ((@lens _.T),),
+    testOrbitFlip = false,
+    testInclinationFlip = false
+    )
 #####
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom);)
-scene = plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1)
+BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Guess for homoclinic orbit")
 ```
 
 ```@example TUTOPL
@@ -253,7 +255,7 @@ probhom, solh = generate_hom_problem(
 	)
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
-plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[:,:]'))
+plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
 optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
@@ -271,12 +273,12 @@ br_hom_sh = continuation(
 		par0 = set(par0, (@lens _.b), p.p)
 		sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
 		m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
-		plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
+		plot!(sol.t, sol[1:6,:]',subplot=3, markersize = 1, marker=m)
 	end,
 	)
 
 _sol = get_homoclinic_orbit(probhom, br_hom_sh.sol[end].x, BK.setparam(br_hom_sh, br_hom_sh.sol[end].p); saveat=.1)
-plot(_sol.t, _sol[:,:]')
+plot(_sol.t, _sol[1:6,:]')
 ```
 
 ```@example TUTOPL

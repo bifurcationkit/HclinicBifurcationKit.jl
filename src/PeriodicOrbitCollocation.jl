@@ -10,6 +10,9 @@ end
 function initBVPforPBC(bvp::PeriodicOrbitOCollProblem, prob_vf, Hom; N, T, ϵ)
     @set! bvp.N = N
     bvp = setproperties(bvp; prob_vf = prob_vf, ϕ = zeros(length(bvp)), xπ = zeros(length(bvp)), update_section_every_step = 0)
+    _N, m, Ntst = size(bvp)
+    cache = BK.POCollCache(eltype(bvp), N, m)
+    @set! bvp.cache = cache
     xflow = generate_hom_solution(bvp, t -> Hom.orbit(t, ϵ), T)
     BK.updatesection!(bvp, vcat(xflow, 2T), BK.getparams(bvp))
     return xflow, bvp
@@ -73,10 +76,10 @@ end
     ns = hom.nStable
     nu = hom.nUnstable
 
-    _u = x.x[1]            # orbit
+    _u = x.x[1]         # orbit
     xsaddle = x.x[2]    # saddle point
-    Ys = x.x[3]            #   stable part for CIS algo
-    Yu = x.x[4]            # unstable part for CIS algo
+    Ys = x.x[3]         #   stable part for CIS algo
+    Yu = x.x[4]         # unstable part for CIS algo
     # get homoclinic parameters
     T, ϵ0, ϵ1 = _changeHomParameters(hom, x.x[5])
 
@@ -182,7 +185,6 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
         t0 = mod(time[indUS]+tsaddle, T)
         x0 = solpo(t0)
         indS = findlast(norm(solpo(t) - xsaddle) > ϵ1 for t in time .+ t0)
-        @assert ~isnothing(indS) "Increase ϵ0"
         t1 = time[indS]+t0
         x1 = solpo(t1)
     else

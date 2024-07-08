@@ -21,7 +21,7 @@ Assuming that you already have Julia correctly installed, it suffices to import
 `HclinicBifurcationKit.jl` in the standard way:
 
 ```julia
-import Pkg; Pkg.add("https://github.com/bifurcationkit/HclinicBifurcationKit.jl")
+] add HclinicBifurcationKit
 ```
 
 ## Support and citation
