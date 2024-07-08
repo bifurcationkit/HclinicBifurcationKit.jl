@@ -4,7 +4,7 @@ using Documenter, HclinicBifurcationKit, Setfield, BifurcationKit
 ENV["GKSwstype"] = "100"
 
 # to display progress
-# ENV["JULIA_DEBUG"] = Documenter
+ENV["JULIA_DEBUG"] = Documenter
 
 makedocs(doctest = false,
 	sitename = "Homoclinic / Heteroclinic orbits in Julia",
