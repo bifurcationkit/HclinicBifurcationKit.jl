@@ -50,9 +50,8 @@ nothing #hide
 We first compute the branch of equilibria
 
 ```@example TUTOPL
-opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 6, plot_every_step = 20, max_steps = 100, save_sol_every_step = 1, detect_fold = true)
-	opts_br = @set opts_br.newton_options.verbose = false
-	br = continuation(prob, PALC(tangent = Secant()), opts_br;
+opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6, plot_every_step = 20, max_steps = 100)
+br = continuation(prob, PALC(tangent = Secant()), opts_br;
 	bothside = false, normC = norminf)
 
 plot(br, plotfold=true)
@@ -65,33 +64,26 @@ scene = plot(br, br2)
 
 
 ```@example TUTOPL
-sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 80) ;
-	alg = PALC(),
-	verbosity = 0,
+sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 80) ;
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
-	update_minaug_every_step = 1,
 	bothside = true,
 	)
 
-hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
+hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
-	start_with_eigen = true,
-	update_minaug_every_step = 1,
 	bothside = true,
 	)
 
-hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
+hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
-	start_with_eigen = true,
-	update_minaug_every_step = 1,
 	bothside = true,
 	)
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-	plot!(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
-	plot!(hopf_br2, branchlabel = "Hopf", vars = (:a, :b))
-	ylims!(0,1.5)
+plot!(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
+plot!(hopf_br2, branchlabel = "Hopf", vars = (:a, :b))
+ylims!(0,1.5)
 ```
 
 ## Branch of homoclinic orbits with Orthogonal Collocation
