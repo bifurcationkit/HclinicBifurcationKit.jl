@@ -49,7 +49,7 @@ nothing #hide
 We first compute the branch of equilibria
 
 ```@example TUTOPL
-opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 8, nev = 6)
+opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6)
 br = continuation(prob, PALC(), opts_br; normC = norminf)
 
 plot(br, plotfold=true)
@@ -64,7 +64,7 @@ scene = plot(br, br2)
 ```@example TUTOPL
 sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 80) ;
 	detect_codim2_bifurcation = 2,
-	start_with_eigen = false,
+	start_with_eigen = true,
 	bothside = true,
 	)
 show(sn_br)
