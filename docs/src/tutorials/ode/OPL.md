@@ -69,19 +69,25 @@ sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurca
 	bothside = true,
 	)
 show(sn_br)
+```
 
+```@example TUTOPL
 hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
 	bothside = true,
 	)
 show(hopf_br)
+```
 
+```@example TUTOPL
 hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
 	bothside = true,
 	)
 show(hopf_br2)
+```
 
+```@example TUTOPL
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
 plot!(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "Hopf", vars = (:a, :b))
@@ -114,7 +120,6 @@ optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 100, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3)
 
 br_coll = continuation(
-	# br, 2,
 	br2, 1,
 	opts_po_cont,
 	PeriodicOrbitOCollProblem(20, 4; meshadapt = true, update_section_every_step = 2);
@@ -165,17 +170,13 @@ BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Guess for homoclin
 
 ```@example TUTOPL
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 5)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = -0.0001, dsmin = 1e-5, plot_every_step = 10, max_steps = 100, detect_bifurcation = 0, detect_event = 2, save_sol_every_step = 1, p_min = -1.01)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-5, detect_bifurcation = 0, detect_event = 2, p_min = -1.01, dsmax = 4e-2, p_max = 1.5, max_steps = 100)
 
 br_hom_c = continuation(
 			deepcopy(probhom), solh, (@lens _.b),
 			PALC(tangent = Bordered()),
-			# PALC(),
-			# MoorePenrose(),
-			setproperties(optc_hom, max_steps = 100, save_sol_every_step = 1, dsmax = 4e-2, plot_every_step = 10, p_max = 1.5);
+			optc_hom;
 	verbosity = 1, plot = true,
-	# callback_newton = BK.cbMaxNorm(1e1),
-	# bothside = true,
 	normC = norminf,
 	plot_solution = (x,p;k...) -> begin
 		𝐇𝐨𝐦 = p.prob
@@ -208,7 +209,6 @@ optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0)
 
 br_sh = continuation(
-	# br, 2,
 	br2, 1,
 	opts_po_cont,
 	ShootingProblem(8, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-11);
