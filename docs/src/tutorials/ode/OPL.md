@@ -49,13 +49,12 @@ nothing #hide
 We first compute the branch of equilibria
 
 ```@example TUTOPL
-opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6, plot_every_step = 20, max_steps = 100)
-br = continuation(prob, PALC(), opts_br;
-	bothside = false, normC = norminf)
+opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 8, nev = 6)
+br = continuation(prob, PALC(), opts_br; normC = norminf)
 
 plot(br, plotfold=true)
 
-br2 = continuation(re_make(prob; u0 = [1.6931472491037485, -0.17634826359471437, 0.06772588996414994, -0.23085768742546342, -0.5672243219935907, -0.09634826359471438]), PALC(), opts_br; verbosity = 0, bothside = false, normC = norminf)
+br2 = continuation(re_make(prob; u0 = [1.6931472491037485, -0.17634826359471437, 0.06772588996414994, -0.23085768742546342, -0.5672243219935907, -0.09634826359471438]), PALC(), opts_br; normC = norminf)
 scene = plot(br, br2)
 ```
 
@@ -65,7 +64,7 @@ scene = plot(br, br2)
 ```@example TUTOPL
 sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 80) ;
 	detect_codim2_bifurcation = 2,
-	start_with_eigen = true,
+	start_with_eigen = false,
 	bothside = true,
 	)
 show(sn_br)
@@ -252,12 +251,12 @@ _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
 plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, max_steps = 300, detect_bifurcation = 0, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9)
 
 br_hom_sh = continuation(
 			deepcopy(probhom), solh, (@lens _.b),
 			PALC(),
-			setproperties(optc_hom, max_steps = 300, save_sol_every_step = 1, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
+			optc_hom;
 	verbosity = 3, plot = true,
 	callback_newton = BK.cbMaxNorm(1e0),
 	normC = norminf,
