@@ -75,10 +75,7 @@ hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifur
 	detect_codim2_bifurcation = 2,
 	bothside = true,
 	)
-show(hopf_br)
-```
 
-```@example TUTOPL
 hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
 	bothside = true,
@@ -87,8 +84,8 @@ show(hopf_br2)
 ```
 
 ```@example TUTOPL
-plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-plot!(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
+# plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
+plot(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "Hopf", vars = (:a, :b))
 ylims!(0,1.5)
 ```
@@ -187,8 +184,8 @@ br_hom_c = continuation(
 	end,
 	)
 
-plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-plot!(hopf_br,  branchlabel = "AH₀",  vars = (:a, :b))
+# plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
+plot(hopf_br,  branchlabel = "AH₀",  vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "AH₁₂", vars = (:a, :b))
 plot!(br_hom_c, branchlabel = "H₀",   vars = (:a, :b))
 ylims!(0.1,1.5)
@@ -275,8 +272,8 @@ plot(_sol.t, _sol[1:6,:]')
 ```
 
 ```@example TUTOPL
-plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-plot!(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
+# plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
+plot(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "AH₁₂", vars = (:a, :b))
 plot!(br_hom_c, branchlabel = "Hc₀", vars = (:a, :b))
 plot!(br_hom_sh, branchlabel = "Hsh₀", vars = (:a, :b), linewidth = 3)
