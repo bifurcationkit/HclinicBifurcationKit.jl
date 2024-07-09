@@ -14,13 +14,13 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 
 [compat]
-BifurcationKit = "0.3.6"
+BifurcationKit = "^0.3.6"
 DocStringExtensions = "0.9"
 ForwardDiff = "^0.10"
 Parameters = "^0.12"
 RecursiveArrayTools = "^2.3, ^2.4, ^2.8, ^2.9, ^3"
-SciMLBase = "^2"
-Setfield = "1"
+SciMLBase = "^1, ^2"
+Setfield = "0.5.0, 0.7.0, 0.8.0, ^1.1"
 julia = "1.5"
 
 [extras]
