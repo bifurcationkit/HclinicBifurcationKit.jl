@@ -68,16 +68,19 @@ sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurca
 	start_with_eigen = true,
 	bothside = true,
 	)
+show(sn_br)
 
 hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
 	bothside = true,
 	)
+show(hopf_br)
 
 hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
 	bothside = true,
 	)
+show(hopf_br2)
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
 plot!(hopf_br, branchlabel = "Hopf", vars = (:a, :b))
