@@ -62,20 +62,20 @@ btpt1 = get_normal_form(sn_codim2, 1; nev = 2, autodiff = false)
 @test mapreduce(isapprox, &, btpt.nfsupp, btpt1.nfsupp)
 
 HC = BK.predictor(btpt, Val(:HopfCurve), 0.)
-    HC.hopf(0.)
+HC.hopf(0.)
 SN = BK.predictor(btpt, Val(:FoldCurve), 0.)
 Hom = BK.predictor(btpt, Val(:HomoclinicCurve), 0.)
-    Hom.orbit(0,0)
+Hom.orbit(0,0)
 
 # plot(sn_codim2, branchlabel = ["Fold"], vars = (:β1, :β2))
-#     _S = LinRange(-0.06, 0.06, 1000)
-#     plot!([HC.hopf(s)[1] for s in _S], [HC.hopf(s)[2] for s in _S], linewidth=5, label = "Hpred")
-#     plot!([SN.fold(s)[1] for s in _S], [SN.fold(s)[2] for s in _S], linewidth=5, label = "SNpred")
-#     _S = LinRange(-0.25, 0.25, 1000)
-#     plot!([Hom.α(s)[1] for s in _S], [Hom.α(s)[2] for s in _S], linewidth=5, label = "Hom")
-#
-#     plot!(hopf_codim2, branchlabel = ["Hopf"], vars = (:β1, :β2), color = :black)
-#     xlims!(-0.05, 0.001)
+# _S = LinRange(-0.06, 0.06, 1000)
+# plot!([HC.hopf(s)[1] for s in _S], [HC.hopf(s)[2] for s in _S], linewidth=5, label = "Hpred")
+# plot!([SN.fold(s)[1] for s in _S], [SN.fold(s)[2] for s in _S], linewidth=5, label = "SNpred")
+# _S = LinRange(-0.25, 0.25, 1000)
+# plot!([Hom.α(s)[1] for s in _S], [Hom.α(s)[2] for s in _S], linewidth=5, label = "Hom")
+
+# plot!(hopf_codim2, branchlabel = ["Hopf"], vars = (:β1, :β2), color = :black)
+# xlims!(-0.05, 0.001)
 
 
 # plot of the homoclinic orbit
