@@ -8,11 +8,11 @@ function generate_hom_solution(pb::PeriodicOrbitOCollProblem, orbit0, T)
 end
 
 function initBVPforPBC(bvp::PeriodicOrbitOCollProblem, prob_vf, Hom; N, T, ϵ)
-    @set! bvp.N = N
+    @reset bvp.N = N
     bvp = setproperties(bvp; prob_vf = prob_vf, ϕ = zeros(length(bvp)), xπ = zeros(length(bvp)), update_section_every_step = 0)
     _N, m, Ntst = size(bvp)
     cache = BK.POCollCache(eltype(bvp), N, m)
-    @set! bvp.cache = cache
+    @reset bvp.cache = cache
     xflow = generate_hom_solution(bvp, t -> Hom.orbit(t, ϵ), T)
     BK.updatesection!(bvp, vcat(xflow, 2T), BK.getparams(bvp))
     return xflow, bvp
@@ -155,12 +155,12 @@ You can pass the same arguments to the constructor of `::HomoclinicHyperbolicPro
 function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
                             x::AbstractArray,
                             pars,
-                            lensHom::Lens;
+                            lensHom::BK.AllOpticTypes;
                             verbose = false,
                             ϵ0 = 1e-5, ϵ1 = 1e-5,
                             t0 = 0, t1 = 0,
                             maxT = Inf,
-                            freeparams = ((@lens _.ϵ0), (@lens _.T)),
+                            freeparams = ((@optic _.ϵ0), (@optic _.T)),
                             kw...)
     println("="^40)
     @assert coll.N > 0
@@ -224,13 +224,13 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
 
     ns = 𝐇𝐨𝐦.nStable
     nu = 𝐇𝐨𝐦.nUnstable
-    p1 = get(pars, lensHom)
+    p1 = BK._get(pars, lensHom)
 
     xhom = ArrayPartition(xflow,
         xsaddle,
         zeros(eltype(xsaddle), n - ns, ns),
         zeros(eltype(xsaddle), n - nu, nu),
-        [p1, map(x -> get(𝐇𝐨𝐦,x), freeparams)...]
+        [p1, map(x -> BK._get(𝐇𝐨𝐦,x), freeparams)...]
         )
 
     return 𝐇𝐨𝐦, xhom, pars, xhom
@@ -239,8 +239,8 @@ end
 function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
                             x::NamedTuple{(:mesh, :sol, :_mesh), Tuple{Vector{Tp}, Vector{Tp}, Vector{Tp}}},
                             pars,
-                            lensHom::Lens; k...) where Tp
-    n,m,_ = size(coll)
+                            lensHom::BK.AllOpticTypes; k...) where Tp
+    n, m, _ = size(coll)
     coll2 = deepcopy(coll)
     BK.update_mesh!(coll2, x.mesh[1:m:end])
     generate_hom_problem(coll2, x.sol, pars, lensHom; k...)

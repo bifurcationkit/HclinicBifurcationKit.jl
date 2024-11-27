@@ -4,7 +4,7 @@ using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-recordFromSolution(x, p) = (D₂₃ = x[6], β = x[1],)
+recordFromSolution(x, p;k...) = (D₂₃ = x[6], β = x[1],)
 ####################################################################################################
 function OPL!(dz, u, p, t)
     (;b, σ, g, a, D₂₁⁰, D₂₃⁰)  = p
@@ -21,7 +21,7 @@ end
 OPL(z, p) = OPL!(similar(z), z, p, 0)
 par_OPL = (b = 1.2, σ = 2.0, g=50., a = 1., D₂₁⁰ = -1., D₂₃⁰ = 0.)
 z0 = zeros(6)
-prob = BK.BifurcationProblem(OPL, z0, par_OPL, (@lens _.a); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(OPL, z0, par_OPL, (@optic _.a); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 6, plot_every_step = 20, max_steps = 100, save_sol_every_step = 1, detect_fold = true)
 br = continuation(prob, PALC(tangent = Secant()), opts_br;
@@ -33,7 +33,7 @@ br2 = continuation(br, 1)
 
 plot(br, br2)
 ####################################################################################################
-sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 80) ;
+sn_br = continuation(br, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 80) ;
     alg = PALC(),
     verbosity = 0,
     detect_codim2_bifurcation = 2,
@@ -45,14 +45,14 @@ sn_br = continuation(br, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurca
 plot(sn_br)
 bt = get_normal_form(sn_br, 2, verbose = true, detailed = true, autodiff = false)
 
-hopf_br = continuation(br, 2, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
+hopf_br = continuation(br, 2, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
     bothside = true,
     )
 
-hopf_br2 = continuation(br2, 1, (@lens _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
+hopf_br2 = continuation(br2, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
@@ -74,7 +74,7 @@ function plotPO(x, p; k...)
 end
 
 # record function
-function recordPO(x, p)
+function recordPO(x, p; k...)
     xtt = BK.get_periodic_orbit(p.prob, x, set(getparams(p.prob), BK.getlens(p.prob), p.p))
     period = BK.getperiod(p.prob, x, p.p)
     return (max = maximum(xtt[6,:]), min = minimum(xtt[6,:]), period = period, )
@@ -122,10 +122,10 @@ probhom, solh = generate_hom_problem(
     # ϵ0 = 1e-7, ϵ1 = 1e-7, # WORK BEST
     # ϵ0 = 1e-8, ϵ1 = 1e-5, # maxT = 70,
     t0 = 0., t1 = 120.,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    # freeparams = ((@optic _.T),),
     testOrbitFlip = false,
     testInclinationFlip = false
     )
@@ -139,7 +139,7 @@ optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 5)
 optc_hom = ContinuationPar(newton_options = optn_hom, ds = -0.0001, dsmin = 1e-5, plot_every_step = 10, max_steps = 100, detect_bifurcation = 0, detect_event = 2, save_sol_every_step = 1, p_min = -1.01)
 
 br_hom_c = continuation(
-            deepcopy(probhom), solh, (@lens _.b),
+            deepcopy(probhom), solh, (@optic _.b),
             PALC(tangent = Bordered()),
             # PALC(),
             # MoorePenrose(),
@@ -151,7 +151,7 @@ br_hom_c = continuation(
     plot_solution = (x,p;k...) -> begin
         𝐇𝐨𝐦 = p.prob
         par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
-        par0 = set(par0, (@lens _.b), p.p)
+        par0 = set(par0, (@optic _.b), p.p)
         sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
         m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
         plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
@@ -212,10 +212,10 @@ probhom, solh = generate_hom_problem(
     update_every_step = 4,
     # ϵ0 = 1e-6, ϵ1 = 1e-5,
     t0 = 75, t1 = 25,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    # freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    # freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    freeparams = ((@optic _.T),),
     )
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
@@ -225,7 +225,7 @@ optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
     optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
 
 br_hom_sh = continuation(
-            deepcopy(probhom), solh, (@lens _.b),
+            deepcopy(probhom), solh, (@optic _.b),
             # PALC(tangent = Bordered()),
             PALC(),
             # ANM(6, 1e-8)
@@ -237,7 +237,7 @@ br_hom_sh = continuation(
     plot_solution = (x,p;k...) -> begin
         𝐇𝐨𝐦 = p.prob
         par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
-        par0 = set(par0, (@lens _.b), p.p)
+        par0 = set(par0, (@optic _.b), p.p)
         sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
         m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
         plot!(sol.t, sol[1:6,:]',subplot=3, markersize = 1, marker=m)

@@ -4,7 +4,7 @@ using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-recordFromSolution(x, p) = (x = x[1], y = x[2])
+recordFromSolution(x, p; k...) = (x = x[1], y = x[2])
 ####################################################################################################
 function freire!(dz, u, p, t)
     (;ν, β, A₃, B₃, r, ϵ) = p
@@ -19,7 +19,7 @@ freire(z, p) = freire!(similar(z), z, p, 0)
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
 z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
-prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(freire, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, max_bisection_steps = 25, nev = 3, max_steps = 2000)
 br = continuation(prob, PALC(tangent = Bordered()), opts_br;
@@ -31,10 +31,10 @@ plot(br, plotfold=true)
 alg = DefCont(deflation_operator = DeflationOperator(2, dot, .001, [z0]), perturb_solution = (x,p,id) -> (x  .+ 0.03 .* rand(length(x))))
 
 opts_br_dc = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.01, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3, plot_every_step = 100, max_steps = 1000)
-@set! opts_br_dc.newton_options.verbose = false
+@reset opts_br_dc.newton_options.verbose = false
 brdc = continuation(prob, alg, opts_br_dc; verbosity = 0, normC = norminf)
 ####################################################################################################
-sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
+sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
     alg = PALC(),
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
@@ -45,7 +45,7 @@ sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detect_bifurc
 plot(sn_br)
 bt = get_normal_form(sn_br, 2, verbose = true, detailed = true, autodiff = false)
 
-hopf_br = continuation(br, 4, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
+hopf_br = continuation(br, 4, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
@@ -73,9 +73,9 @@ br_hom_c = continuation(
             ContinuationPar(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
     verbosity = 1, plot = false,
     ϵ0 = 1e-5, amplitude = 2e-3,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
     normC = norminf,
     plot_solution = plotHom,
     update_every_step = 4,
@@ -93,7 +93,7 @@ function plotPO(x, p; k...)
 end
 
 # record function
-function recordPO(x, p)
+function recordPO(x, p; k...)
     xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     period = BK.getperiod(p.prob, x, p.p)
     return (period = period, max = maximum(xtt[1,:]), min = minimum(xtt[1,:]))
@@ -136,10 +136,10 @@ probhom, solh = generate_hom_problem(
     update_every_step = 4,
     ϵ0 = 1e-9,
     ϵ1 = 1e-6,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
+    # freeparams = ((@optic _.T),),
     )
 
 #####
@@ -153,7 +153,7 @@ optc_hom = ContinuationPar(newton_options = optn_hom, ds = 0.0001, dsmin = 1e-5,
 solh.x[2] .=0
 
 br_hom_c = continuation(
-            deepcopy(probhom), solh, (@lens _.ν),
+            deepcopy(probhom), solh, (@optic _.ν),
             PALC(tangent = Bordered()),
             ContinuationPar(optc_hom, max_steps = 130, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1);
     verbosity = 4, plot = true,
@@ -210,10 +210,10 @@ probhom, solh = generate_hom_problem(
     update_every_step = 4,
     ϵ0 = 7e-8,
     ϵ1 = 8e-8,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    # freeparams = ((@optic _.T),),
     )
 
 solh.x[2] .= 0
@@ -225,7 +225,7 @@ optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 7)
 optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1,max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
 
 br_hom_sh = continuation(
-            deepcopy(probhom), solh, (@lens _.ν),
+            deepcopy(probhom), solh, (@optic _.ν),
             PALC(tangent = Bordered()),
             # MoorePenrose(),
             ContinuationPar(optc_hom, max_steps = 30, save_sol_every_step = 1, dsmax = 3e-2, plot_every_step = 10, detect_event = 2);
@@ -250,10 +250,10 @@ br_hom_sh = continuation(
     verbosity = 1, plot = true,
     ϵ0 = 1e-6, amplitude = 2e-2,
     update_every_step = 2,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),),
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    # freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
-    freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    # freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
+    freeparams = ((@optic _.T),),
     normC = norminf,
     plot_solution = plotHom,
     maxT = 45.,

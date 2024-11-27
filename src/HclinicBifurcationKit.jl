@@ -1,5 +1,5 @@
 module HclinicBifurcationKit
-    using BifurcationKit, DocStringExtensions, Setfield, Parameters
+    using BifurcationKit, DocStringExtensions, Parameters
     using ForwardDiff
     using LinearAlgebra: norm, schur, ordschur, I, mul!, dot, eigen, normalize!
     using RecursiveArrayTools: ArrayPartition

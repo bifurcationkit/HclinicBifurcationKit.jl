@@ -18,12 +18,12 @@ It is easy to encode the ODE as follows
 
 ```@example TUTFREIRE
 using Revise, Plots
-using Setfield, LinearAlgebra, Test, ForwardDiff
+using LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-recordFromSolution(x, p) = (x = x[1], y = x[2])
+recordFromSolution(x, p; k...) = (x = x[1], y = x[2])
 
 function freire!(dz, u, p, t)
 	(;ν, β, A₃, B₃, r, ϵ) = p
@@ -38,7 +38,7 @@ freire(z, p) = freire!(similar(z), z, p, 0)
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
 z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
-prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(freire, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
 
 nothing #hide
 ```
@@ -63,7 +63,7 @@ br
 
 
 ```@example TUTFREIRE
-sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
+sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
 	alg = PALC(),
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
@@ -71,7 +71,7 @@ sn_br = continuation(br, 2, (@lens _.ν), ContinuationPar(opts_br, detect_bifurc
 	bothside = true,
 	)
 
-hopf_br = continuation(br, 4, (@lens _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
+hopf_br = continuation(br, 4, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
 	update_minaug_every_step = 1,
@@ -112,9 +112,9 @@ br_hom_c = continuation(
 			setproperties(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
 	verbosity = 0, plot = false,
 	ϵ0 = 1e-5, amplitude = 2e-3,
-	# freeparams = ((@lens _.T), (@lens _.ϵ1),)
-	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
-	freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
+	# freeparams = ((@optic _.T), (@optic _.ϵ1),)
+	# freeparams = ((@optic _.T), (@optic _.ϵ0)),
+	freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
 	normC = norminf,
 	update_every_step = 4,
 	)
@@ -140,10 +140,10 @@ br_hom_sh = continuation(
 	verbosity = 1, plot = true,
 	ϵ0 = 1e-6, amplitude = 2e-2,
 	update_every_step = 2,
-	# freeparams = ((@lens _.T), (@lens _.ϵ1),),
-	# freeparams = ((@lens _.T), (@lens _.ϵ0)),
-	# freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
-	freeparams = ((@lens _.T),),
+	# freeparams = ((@optic _.T), (@optic _.ϵ1),),
+	# freeparams = ((@optic _.T), (@optic _.ϵ0)),
+	# freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
+	freeparams = ((@optic _.T),),
 	normC = norminf,
 	plot_solution = plotHom,
 	maxT = 45.,

@@ -172,7 +172,7 @@ Generate a homoclinic to hyperbolic saddle problem from a periodic solution obta
 - `sh` a `ShootingProblem` which provide basic information, like the number of time slices `M`
 - `x::AbstractArray` initial guess
 - `pars` parameters
-- `lensHom::Lens` parameter axis for continuation
+- `lensHom::BK.AllOpticTypes` parameter axis for continuation
 - `ϵ0, ϵ1`: specify the distance to the saddle point of x₀, x₁
 - `t0, t1`: specify the time corresponding to x₀, x₁. Overwrite the part with `ϵ0, ϵ1` if set.
 
@@ -185,13 +185,13 @@ You can pass the same arguments to the constructor of `::HomoclinicHyperbolicPro
 function generate_hom_problem(sh::ShootingProblem,
                             x::AbstractArray,
                             pars,
-                            lensHom::Lens;
+                            lensHom::BK.AllOpticTypes;
                             verbose = false,
                             time = LinRange(0, getperiod(sh, x), 100),
                             ϵ0 = 1e-5, ϵ1 = 1e-5,
                             t0 = 0, t1 = 0,
                             maxT = Inf,
-                            freeparams = ((@lens _.ϵ0), (@lens _.T)),
+                            freeparams = ((@optic _.ϵ0), (@optic _.T)),
                             kw...)
     verbose && println("="^40)
     @assert sh.M > 0
@@ -231,7 +231,7 @@ function generate_hom_problem(sh::ShootingProblem,
     # we put a uniform mesh in sh
     bvp = deepcopy(sh)
     bvp = BK.set_params_po(bvp, pars)
-    @set! bvp.update_section_every_step = 0
+    @reset bvp.update_section_every_step = 0
     dt = Thom/M
     xflow = reduce(vcat, solpo(t0 + n * dt) for n=0:M-1)
 
@@ -262,13 +262,13 @@ function generate_hom_problem(sh::ShootingProblem,
     n = length(x0)
     ns = 𝐇𝐨𝐦.nStable
     nu = 𝐇𝐨𝐦.nUnstable
-    p1 = get(pars, lensHom)
+    p1 = BK._get(pars, lensHom)
 
     xhom = ArrayPartition(xflow,
         xsaddle,
         zeros(eltype(xsaddle), n - ns, ns),
         zeros(eltype(xsaddle), n - nu, nu),
-        [p1, map(x -> get(𝐇𝐨𝐦, x), freeparams)...]
+        [p1, map(x -> BK._get(𝐇𝐨𝐦, x), freeparams)...]
         )
 
     return 𝐇𝐨𝐦, xhom, pars, xhom

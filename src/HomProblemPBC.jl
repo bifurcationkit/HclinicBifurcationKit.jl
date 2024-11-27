@@ -54,7 +54,7 @@ function HomoclinicHyperbolicProblemPBC(bvp::Tbvp,
                 ϵ0 = 0.01,
                 ϵ1 = 0.01,
                 T = 100.,
-                freeparams = ((@lens _.ϵ0), (@lens _.T)),
+                freeparams = ((@optic _.ϵ0), (@optic _.T)),
                 update_every_step = 2,
                 testOrbitFlip = false,
                 testInclinationFlip = false,
@@ -246,7 +246,7 @@ Similar to [`continuation`](@ref) except that the problem is a [`HomoclinicHyper
 """
 function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
             homguess,
-            lens::Lens,
+            lens::BK.AllOpticTypes,
             alg::BK.AbstractContinuationAlgorithm,
             _contParams::ContinuationPar;
             plot_solution = BK.plot_default,
@@ -333,11 +333,11 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
 
     probhom_bk = BifurcationProblem(𝐇𝐨𝐦, homguess, BK.getparams(𝐇𝐨𝐦), lens;
         J = (x,p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z,p), x),
-        record_from_solution = (x, p) -> begin
+        record_from_solution = (x, p; k...) -> begin
             if length(𝐇𝐨𝐦.freelens) == 1
-                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @lens _.FreeP1))
+                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @optic _.FreeP1))
             else
-                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, (@lens _.FreeP1), @lens _.FreeP2))
+                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, (@optic _.FreeP1), @optic _.FreeP2))
             end
             record = (;zip(lensS, (x.x[end][1], p, x.x[end][2:end]...))...)
             if _contParams.detect_event > 0
@@ -383,7 +383,7 @@ function BK.continuation(prob_vf,
             alg::BK.AbstractContinuationAlgorithm,
             _contParams::ContinuationPar ;
             ϵ0 = 1e-5, amplitude = 1e-3,
-            freeparams = ((@lens _.ϵ0), (@lens _.T)),
+            freeparams = ((@optic _.ϵ0), (@optic _.T)),
             maxT = Inf,
             update_every_step = 1,
             test_orbit_flip = false,
@@ -454,7 +454,7 @@ function BK.continuation(prob_vf,
         xsaddle,
         zeros(eltype(x0), N - ns, ns),
         zeros(eltype(x0), N - nu, nu),
-        [p1, map(x -> get(𝐇𝐨𝐦,x), freeparams)...]
+        [p1, map(x -> BK._get(𝐇𝐨𝐦, x), freeparams)...]
         )
 
     br = BK.continuation(𝐇𝐨𝐦, xhom, lens2, alg, _contParams; kwargs...)
