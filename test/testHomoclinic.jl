@@ -1,7 +1,7 @@
 # using Revise
 # using Plots
 using Test
-using BifurcationKit, LinearAlgebra, Setfield, ForwardDiff, HclinicBifurcationKit
+using BifurcationKit, LinearAlgebra, ForwardDiff, HclinicBifurcationKit
 const BK = BifurcationKit
 
 ####################################################################################################
@@ -13,13 +13,13 @@ function Fbt!(dx, x, p, t=0)
 end
 Fbt(x,p) = Fbt!(similar(x),x,p)
 par = (β1 = -0.01, β2 = -0.1, a = 1., b = -1.)
-prob  = BK.BifurcationProblem(Fbt, [0.01, 0.01], par, (@lens _.β1))
+prob  = BK.BifurcationProblem(Fbt, [0.01, 0.01], par, (@optic _.β1))
 opt_newton = NewtonPar(tol = 1e-9, max_iterations = 40, verbose = false)
 opts_br = ContinuationPar(dsmin = 0.001, dsmax = 0.01, ds = 0.01, p_max = 0.5, p_min = -0.5, detect_bifurcation = 3, nev = 2, newton_options = opt_newton, max_steps = 100, n_inversion = 8, tol_bisection_eigenvalue = 1e-8, dsmin_bisection = 1e-9, save_sol_every_step = 1)
 
 br = continuation(prob, PALC(), opts_br; bothside = true, verbosity = 0)
 
-sn_codim2 = continuation(br, 2, (@lens _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 40) ;
+sn_codim2 = continuation(br, 2, (@optic _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 40) ;
     detect_codim2_bifurcation = 2,
     update_minaug_every_step = 1,
     )
@@ -27,7 +27,7 @@ sn_codim2 = continuation(br, 2, (@lens _.β2), ContinuationPar(opts_br, detect_b
 @test sn_codim2.specialpoint[1].param ≈ 0 atol = 1e-6
 @test length(unique(sn_codim2.BT)) == length(sn_codim2)
 
-hopf_codim2 = continuation(br, 3, (@lens _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 40, max_bisection_steps = 25) ; plot = false, verbosity = 0,
+hopf_codim2 = continuation(br, 3, (@optic _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 40, max_bisection_steps = 25) ; plot = false, verbosity = 0,
     detect_codim2_bifurcation = 2,
     update_minaug_every_step = 1,
     bothside = true,
@@ -102,11 +102,11 @@ end
 br_hom = continuation(prob, btpt,
     PeriodicOrbitOCollProblem(20, 4; meshadapt = true),
     PALC(tangent = Bordered()),
-    setproperties(optc_hom, max_steps = 200, save_sol_every_step = 1, dsmax = 3e-1, plot_every_step = 3, detect_event=2);
+    ContinuationPar(optc_hom, max_steps = 200, save_sol_every_step = 1, dsmax = 3e-1, plot_every_step = 3, detect_event=2);
     amplitude = 5e-3, ϵ0 = 1e-3,
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    # freeparams = ((@optic _.T),),
     verbosity = 0, plot = false,
     callback_newton = BK.cbMaxNorm(1e1),
     plot_solution = plotHom,
@@ -131,12 +131,12 @@ br_hom = continuation(prob, btpt,
     # PALC(tangent = Bordered()),
     PALC(),
     # MoorePenrose(),
-    setproperties(optc_hom, max_steps = 10, save_sol_every_step = 1, dsmax = 9e-1, plot_every_step = 1, detect_event=0);
+    ContinuationPar(optc_hom, max_steps = 10, save_sol_every_step = 1, dsmax = 9e-1, plot_every_step = 1, detect_event=0);
     amplitude = 5e-3, ϵ0 = 2e-4,
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.T), (@lens _.ϵ1)),
-    # freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.T), (@optic _.ϵ1)),
+    # freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    # freeparams = ((@optic _.T),),
     verbosity = 0, plot = false,
     update_every_step = 1, # ne marche pas sinon. pb n est pas avec updatesection
     plot_solution = plotHom,

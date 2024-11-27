@@ -206,7 +206,7 @@ function generate_hom_problem(sh::ShootingProblem,
     ind_saddle = argmin(norm(BK.vf(sh.flow, solpo(t), pars)) for t in time)
     xsaddle = solpo(time[ind_saddle])
     tsaddle = time[ind_saddle]
-    solsaddle = BK.newton(BifurcationProblem((x,p) -> BK.vf(sh.flow,x,p),xsaddle,pars), NewtonPar(verbose = true), norm = x->norm(x,Inf))
+    solsaddle = BK.solve(BifurcationProblem((x,p) -> BK.vf(sh.flow,x,p),xsaddle,pars), Newton(), NewtonPar(verbose = true), norm = x->norm(x,Inf))
     if BK.converged(solsaddle)
         xsaddle .= solsaddle.u
     end

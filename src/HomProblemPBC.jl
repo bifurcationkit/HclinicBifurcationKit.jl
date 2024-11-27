@@ -410,7 +410,7 @@ function BK.continuation(prob_vf,
     T0 = 2/exp(ζ)
     f(t) = sech(ϵ * t) - ζ
     pb = BifurcationProblem((t,p) -> [f(t[1])], [T0/ϵ], nothing)
-    solT = newton(pb, NewtonPar(tol = 1e-8, verbose = false))
+    solT = BK.solve(pb, Newton(), NewtonPar(tol = 1e-8, verbose = false))
     @assert BK.converged(solT) "Newton iteration failed in determining the half return time T"
     T = min(solT.u[1], maxT)
     printstyled(color = :magenta,"├─ T = ", T, "\n")
@@ -431,18 +431,24 @@ function BK.continuation(prob_vf,
 
     # define initial guess for newton
     prob_vf = re_make(prob_vf, params = pars)
-    xflow, bvp = initBVPforPBC(bvp, prob_vf, Hom; N = N, T = T, ϵ = ϵ)
+    xflow, bvp = initBVPforPBC(bvp, prob_vf, Hom; N, T, ϵ)
     bvp = BK.set_params_po(bvp, pars)
 
     # define problem for Homoclinic functional
     J = BK.jacobian(prob_vf, xsaddle, pars)
-    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp, lens1, length(xsaddle), copy(J);  ϵ0 = ϵ0hom, ϵ1 = ϵ1hom, T = Thom, freeparams = freeparams, update_every_step = update_every_step, testOrbitFlip = test_orbit_flip,
-    testInclinationFlip = test_inclination_flip)
+    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp, lens1, length(xsaddle), copy(J);  
+                    ϵ0 = ϵ0hom,
+                    ϵ1 = ϵ1hom,
+                    T = Thom,
+                    freeparams = freeparams,
+                    update_every_step = update_every_step,
+                    testOrbitFlip = test_orbit_flip,
+                    testInclinationFlip = test_inclination_flip)
 
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 
     printstyled("──> convergence to saddle point:\n", color = :magenta)
-    solsaddle = BK.newton(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), NewtonPar(verbose = true), norm = x->norm(x,Inf))
+    solsaddle = BK.solve(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), Newton(), NewtonPar(verbose = true), norm = x->norm(x,Inf))
     if BK.converged(solsaddle)
         xsaddle .= solsaddle.u
     end

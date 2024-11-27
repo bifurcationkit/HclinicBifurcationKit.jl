@@ -11,7 +11,6 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 
 [compat]
 BifurcationKit = "^0.3.6, ^0.4.4"
@@ -20,7 +19,6 @@ ForwardDiff = "^0.10"
 Parameters = "^0.12"
 RecursiveArrayTools = "^2.3, ^2.4, ^2.8, ^2.9, ^3"
 SciMLBase = "^1, ^2"
-Setfield = "0.5.0, 0.7.0, 0.8.0, ^1.1"
 julia = "1.9"
 
 [extras]

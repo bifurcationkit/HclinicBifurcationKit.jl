@@ -1,10 +1,10 @@
 # using Revise, Plots, AbbreviatedStackTraces
-using Setfield, LinearAlgebra, Test, ForwardDiff
+using LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
 const BK = BifurcationKit
 
-recordFromSolution(x, p) = (x = x[1], y = x[2])
+recordFromSolution(x, p; k...) = (x = x[1], y = x[2])
 ####################################################################################################
 function freire!(dz, u, p, t)
     (;ν, β, A₃, B₃, r, ϵ) = p
@@ -19,7 +19,7 @@ freire(z, p) = freire!(similar(z), z, p, 0)
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
 z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
-prob = BK.BifurcationProblem(freire, z0, par_freire, (@lens _.β); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(freire, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3, max_steps = 2000)
 br = continuation(prob, PALC(tangent = Bordered()), opts_br; verbosity = 0,
@@ -36,7 +36,7 @@ function plotPO(x, p; k...)
 end
 
 # record function
-function recordPO(x, p)
+function recordPO(x, p; k...)
     xtt = BK.get_periodic_orbit(p.prob, x, @set par_freire.β = p.p)
     period = BK.getperiod(p.prob, x, p.p)
     return (period = period, max = maximum(xtt[1,:]), min = minimum(xtt[1,:]))
@@ -76,10 +76,10 @@ probhom, solh = generate_hom_problem(
     update_every_step = 4,
     ϵ0 = 1e-9,
     ϵ1 = 1e-6,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)),
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)),
+    # freeparams = ((@optic _.T),),
     )
 
 show(probhom)
@@ -125,10 +125,10 @@ probhom, solh = generate_hom_problem(
     update_every_step = 4,
     ϵ0 = 7e-8,
     ϵ1 = 8e-8,
-    # freeparams = ((@lens _.T), (@lens _.ϵ1),)
-    # freeparams = ((@lens _.T), (@lens _.ϵ0)),
-    freeparams = ((@lens _.ϵ0), (@lens _.ϵ1)), # WORK BEST
-    # freeparams = ((@lens _.T),),
+    # freeparams = ((@optic _.T), (@optic _.ϵ1),)
+    # freeparams = ((@optic _.T), (@optic _.ϵ0)),
+    freeparams = ((@optic _.ϵ0), (@optic _.ϵ1)), # WORK BEST
+    # freeparams = ((@optic _.T),),
     )
 
 solh.x[2] .=0
