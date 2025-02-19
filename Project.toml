@@ -13,7 +13,7 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 
 [compat]
-BifurcationKit = "^0.3.6, ^0.4.4"
+BifurcationKit = "^0.3.6, ^0.4"
 DocStringExtensions = "^0.9"
 ForwardDiff = "^0.10"
 Parameters = "^0.12"
