@@ -11,7 +11,8 @@ function initBVPforPBC(bvp::PeriodicOrbitOCollProblem, prob_vf, Hom; N, T, ϵ)
     @reset bvp.N = N
     bvp = setproperties(bvp; prob_vf = prob_vf, ϕ = zeros(length(bvp)), xπ = zeros(length(bvp)), update_section_every_step = 0)
     _N, m, Ntst = size(bvp)
-    cache = BK.POCollCache(eltype(bvp), N, m)
+    bvp = BK.set_collocation_size(bvp, Ntst, m)
+    cache = BK.POCollCache(eltype(bvp), Ntst, N, m)
     @reset bvp.cache = cache
     xflow = generate_hom_solution(bvp, t -> Hom.orbit(t, ϵ), T)
     BK.updatesection!(bvp, vcat(xflow, 2T), BK.getparams(bvp))
@@ -196,12 +197,13 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
     # we put a uniform mesh in bvp even if coll is non uniform
     n, m, Ntst = size(coll)
     bvp = deepcopy(coll)
-    bvp = setproperties(bvp; ϕ = zeros(length(coll)), xπ = zeros(length(coll)), cache = BK.POCollCache(eltype(coll), n, m), update_section_every_step = 0)
+    bvp = BK.set_collocation_size(bvp, Ntst, m)
+    @reset bvp.update_section_every_step = 0
     BK.update_mesh!(bvp, LinRange{eltype(coll)}( 0, 1, Ntst + 1) |> collect)
     bvp = BK.set_params_po(bvp, pars)
 
     Thom = min(mod(t1-t0, T), maxT)
-    xflow = mapreduce(t->solpo(t0+t*Thom), vcat, BK.get_times(bvp))
+    xflow = mapreduce(t -> solpo(t0 + t * Thom), vcat, BK.get_times(bvp))
     BK.updatesection!(bvp, vcat(xflow, Thom), BK.getparams(bvp))
 
     # create Homoclinic parameters
