@@ -112,7 +112,7 @@ end
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 100, newton_options = (@set optn_po.tol = 1e-8), detect_bifurcation = 0, plot_every_step = 3)
+opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 100, newton_options = optn_po, detect_bifurcation = 0, plot_every_step = 3)
 
 br_coll = continuation(
 	br2, 1,
@@ -136,7 +136,7 @@ br_coll = continuation(
 	normC = norminf)
 	
 _sol = get_periodic_orbit(br_coll, length(br_coll))
-BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Last periodic orbit on branch")
+plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Last periodic orbit on branch")
 ```
 
 ```@example TUTOPL
@@ -160,7 +160,7 @@ probhom, solh = generate_hom_problem(
 #####
 
 _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom);)
-BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Guess for homoclinic orbit")
+plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Guess for homoclinic orbit")
 ```
 
 ```@example TUTOPL
@@ -201,7 +201,7 @@ probsh = ODEProblem(OPL!, copy(z0), (0., 1000.), par_OPL; abstol = 1e-12, reltol
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0)
+opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = optn_po, detect_bifurcation = 0)
 
 br_sh = continuation(
 	br2, 1,
@@ -213,8 +213,6 @@ br_sh = continuation(
 	callback_newton = BK.cbMaxNorm(1e0),
 	plot_solution = (x, p; k...) -> begin
 		plotPO(x, p; k...)
-		## add previous branch
-		# plot!(br, subplot=1, putbifptlegend = false)
 		end,
 	finalise_solution = (z, tau, step, contResult; prob = nothing, kwargs...) -> begin
 		# limit the period
@@ -223,7 +221,7 @@ br_sh = continuation(
 		end,
 	normC = norminf)
 
-_sol = get_periodic_orbit(br_sh.prob.prob, br_sh.sol[end].x, BK.setparam(br_sh,  br_sh.sol[end].p))
+_sol = get_periodic_orbit(br_sh, length(br_sh))
 plot(_sol.t, _sol[1:3,:]')
 ```
 
@@ -247,7 +245,7 @@ _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
 plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, max_steps = 300, detect_bifurcation = 0, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, max_steps = 300, detect_bifurcation = 0, dsmax = 0.1, p_max = 7., detect_event = 2, a = 0.9)
 
 br_hom_sh = continuation(
 			deepcopy(probhom), solh, (@optic _.b),
