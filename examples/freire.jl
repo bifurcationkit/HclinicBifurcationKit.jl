@@ -6,7 +6,7 @@ const BK = BifurcationKit
 
 recordFromSolution(x, p; k...) = (x = x[1], y = x[2])
 ####################################################################################################
-function freire!(dz, u, p, t)
+function freire!(dz, u, p, t = 0)
     (;ν, β, A₃, B₃, r, ϵ) = p
     x, y, z = u
     dz[1] = (-ν*x + β*(y-x) - A₃*x^3 + B₃*(y-x)^3 + ϵ)/r
