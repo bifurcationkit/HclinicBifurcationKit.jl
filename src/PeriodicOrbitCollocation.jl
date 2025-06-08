@@ -200,7 +200,7 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
     bvp = BK.set_collocation_size(bvp, Ntst, m)
     @reset bvp.update_section_every_step = 0
     BK.update_mesh!(bvp, LinRange{eltype(coll)}( 0, 1, Ntst + 1) |> collect)
-    bvp = BK.set_params_po(bvp, pars)
+    bvp = BK._set_params_po(bvp, pars)
 
     Thom = min(mod(t1-t0, T), maxT)
     xflow = mapreduce(t -> solpo(t0 + t * Thom), vcat, BK.get_times(bvp))

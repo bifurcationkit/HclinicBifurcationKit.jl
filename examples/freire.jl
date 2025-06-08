@@ -15,11 +15,10 @@ function freire!(dz, u, p, t = 0)
     dz
 end
 
-freire(z, p) = freire!(similar(z), z, p, 0)
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
 z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
-prob = BK.BifurcationProblem(freire, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(freire!, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, max_bisection_steps = 25, nev = 3, max_steps = 2000)
 br = continuation(prob, PALC(tangent = Bordered()), opts_br;

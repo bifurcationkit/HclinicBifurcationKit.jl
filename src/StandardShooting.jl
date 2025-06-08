@@ -230,7 +230,7 @@ function generate_hom_problem(sh::ShootingProblem,
 
     # we put a uniform mesh in sh
     bvp = deepcopy(sh)
-    bvp = BK.set_params_po(bvp, pars)
+    bvp = BK._set_params_po(bvp, pars)
     @reset bvp.update_section_every_step = 0
     dt = Thom/M
     xflow = reduce(vcat, solpo(t0 + n * dt) for n=0:M-1)
