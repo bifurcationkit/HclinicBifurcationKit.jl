@@ -1,4 +1,4 @@
-# using Revise, Plots, AbbreviatedStackTraces
+# using Revise, Plots
 using LinearAlgebra, Test, ForwardDiff
 using BifurcationKit, Test
 using HclinicBifurcationKit
@@ -36,7 +36,7 @@ end
 
 # record function
 function recordPO(x, p; k...)
-    xtt = BK.get_periodic_orbit(p.prob, x, @set par_freire.β = p.p)
+    xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     period = BK.getperiod(p.prob, x, p.p)
     return (period = period, max = maximum(xtt[1,:]), min = minimum(xtt[1,:]))
 end
