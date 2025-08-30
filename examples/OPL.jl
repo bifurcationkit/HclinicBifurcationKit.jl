@@ -6,7 +6,7 @@ const BK = BifurcationKit
 
 recordFromSolution(x, p;k...) = (D₂₃ = x[6], β = x[1],)
 ####################################################################################################
-function OPL!(dz, u, p, t)
+function OPL!(dz, u, p, t = 0)
     (;b, σ, g, a, D₂₁⁰, D₂₃⁰)  = p
     β, p₂₁, p₂₃, p₃₁, D₂₁, D₂₃ = u
     dz[1] = -σ * β + g * p₂₃
@@ -18,12 +18,11 @@ function OPL!(dz, u, p, t)
     dz
 end
 
-OPL(z, p) = OPL!(similar(z), z, p, 0)
 par_OPL = (b = 1.2, σ = 2.0, g=50., a = 1., D₂₁⁰ = -1., D₂₃⁰ = 0.)
 z0 = zeros(6)
-prob = BK.BifurcationProblem(OPL, z0, par_OPL, (@optic _.a); record_from_solution = recordFromSolution)
+prob = BK.BifurcationProblem(OPL!, z0, par_OPL, (@optic _.a); record_from_solution = recordFromSolution)
 
-opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 6, plot_every_step = 20, max_steps = 100, save_sol_every_step = 1, detect_fold = true)
+opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6, plot_every_step = 20, max_steps = 100)
 br = continuation(prob, PALC(tangent = Secant()), opts_br;
     bothside = false, normC = norminf)
 
@@ -67,7 +66,7 @@ ylims!(0,1.5)
 ####################################################################################################
 # plotting function
 function plotPO(x, p; k...)
-    xtt = BK.get_periodic_orbit(p.prob, x, set(getparams(p.prob), BK.getlens(p.prob), p.p))
+    xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     plot!(xtt.t, xtt[1,:]; markersize = 2, k...)
     plot!(xtt.t, xtt[6,:]; k...)
     scatter!(xtt.t, xtt[1,:]; markersize = 1, legend = false, k...)
@@ -75,7 +74,7 @@ end
 
 # record function
 function recordPO(x, p; k...)
-    xtt = BK.get_periodic_orbit(p.prob, x, set(getparams(p.prob), BK.getlens(p.prob), p.p))
+    xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     period = BK.getperiod(p.prob, x, p.p)
     return (max = maximum(xtt[6,:]), min = minimum(xtt[6,:]), period = period, )
 end
@@ -109,7 +108,7 @@ br_coll = continuation(
     normC = norminf)
 
 _sol = get_periodic_orbit(br_coll, length(br_coll))
-BK.plot(_sol.t, _sol.u'; marker = :d, markersize = 1, title = "Last periodic orbit on branch")
+plot(_sol.t, _sol.u'; marker = :d, markersize = 1, title = "Last periodic orbit on branch")
 ####################################################################################################
 # homoclinic
 probhom, solh = generate_hom_problem(
@@ -136,7 +135,7 @@ _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom);)
 plot(_sol.t, _sol[:,:]', marker = :d, markersize = 1, title = "Initial guess for homoclinic orbit")
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 5)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = -0.0001, dsmin = 1e-5, plot_every_step = 10, max_steps = 100, detect_bifurcation = 0, detect_event = 2, save_sol_every_step = 1, p_min = -1.01)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -0.0001, dsmin = 1e-5, plot_every_step = 10, max_steps = 100, detect_bifurcation = 0, detect_event = 2, p_min = -1.01)
 
 br_hom_c = continuation(
             deepcopy(probhom), solh, (@optic _.b),
@@ -175,7 +174,7 @@ probsh = ODEProblem(OPL!, copy(z0), (0., 1000.), par_OPL; abstol = 1e-12, reltol
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
 
 # continuation parameters
-opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0, plot_every_step = 10, save_sol_every_step=1)
+opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 6.8, p_min=-5., max_steps = 130, newton_options = (@set optn_po.tol = 1e-8), tol_stability = 1e-4, detect_bifurcation = 0)
 
 br_sh = continuation(
     # br, 2,
@@ -183,7 +182,7 @@ br_sh = continuation(
     opts_po_cont,
     ShootingProblem(8, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-11);
     ampfactor = 1., δp = 0.0015,
-    verbosity = 2,    plot = true,
+    verbosity = 2, plot = true,
     record_from_solution = recordPO,
     # alg = MoorePenrose(),
     callback_newton = BK.cbMaxNorm(1e0),
@@ -222,7 +221,7 @@ _sol = get_homoclinic_orbit(probhom, solh, BK.getparams(probhom); saveat=.1)
 plot(plot(_sol[1,:], _sol[2,:]), plot(_sol.t, _sol[1:4,:]'))
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-9, max_iterations = 7)
-    optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = -1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1, max_steps = 10, detect_bifurcation = 0)
 
 br_hom_sh = continuation(
             deepcopy(probhom), solh, (@optic _.b),
@@ -230,7 +229,7 @@ br_hom_sh = continuation(
             PALC(),
             # ANM(6, 1e-8)
             # MoorePenrose(),
-            setproperties(optc_hom, max_steps = 600, save_sol_every_step = 1, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
+            setproperties(optc_hom, max_steps = 600, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
     verbosity = 3, plot = true,
     callback_newton = BK.cbMaxNorm(1e0),
     normC = norminf,

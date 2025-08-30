@@ -160,8 +160,7 @@ br_hom_c = continuation(
     plot_solution = plotHom,
     )
 
-using PrettyTables
-br_hom_c.branch[end-20:end] |> pretty_table
+br_hom_c.branch[end-20:end] |> vscodedisplay
 
 plot(sn_br, hopf_br, ylims = (0, 1.25))
 plot!(br_hom_c)

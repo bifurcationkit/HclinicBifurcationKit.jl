@@ -164,7 +164,7 @@ end
 end
 
 """
-$(SIGNATURES)
+$(TYPEDSIGNATURES)
 
 Generate a homoclinic to hyperbolic saddle problem from a periodic solution obtained with problem `pb`.
 
@@ -226,13 +226,13 @@ function generate_hom_problem(sh::ShootingProblem,
         indUS, indS = 0, 0
     end
 
-    Thom = min(mod(t1-t0, T), maxT)
+    Thom = min(mod(t1 - t0, T), maxT)
 
     # we put a uniform mesh in sh
     bvp = deepcopy(sh)
     bvp = BK._set_params_po(bvp, pars)
     @reset bvp.update_section_every_step = 0
-    dt = Thom/M
+    dt = Thom / M
     xflow = reduce(vcat, solpo(t0 + n * dt) for n=0:M-1)
 
     # put a specific section
@@ -241,13 +241,21 @@ function generate_hom_problem(sh::ShootingProblem,
     bvp = setproperties(bvp, section = section)
     BK.updatesection!(bvp, vcat(xflow, T), BK.getparams(bvp))
 
-    # create Homoclinic parameters
+    # create homoclinic parameters
     ϵ0hom = norm(x0 - xsaddle)
     ϵ1hom = norm(x1 - xsaddle)
 
     # define problem for Homoclinic functional
     J = ForwardDiff.jacobian(x -> BK.vf(sh.flow, x, pars), xsaddle)
-    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp, lensHom, length(xsaddle), copy(J);  ϵ0 = ϵ0hom, ϵ1 = ϵ1hom, T = Thom, freeparams = freeparams, kw...)
+    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp,
+                                lensHom,
+                                length(xsaddle),
+                                copy(J);
+                                ϵ0 = ϵ0hom,
+                                ϵ1 = ϵ1hom,
+                                T = Thom,
+                                freeparams = freeparams,
+                                kw...)
 
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 

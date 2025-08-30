@@ -135,9 +135,12 @@ end
 
 using SciMLBase: AbstractTimeseriesSolution
 """
-$(SIGNATURES)
+$(TYPEDSIGNATURES)
 
 Generate a homoclinic to hyperbolic saddle problem from a periodic solution obtained with problem `pb`.
+
+!!! tip "Adapted mesh"
+    In case of an adapted mesh, you can pass the `POSolutionAndState` directly in place of `x`.
 
 ## Arguments
 - `coll` a `PeriodicOrbitOCollProblem` which provide basic information, like the number of time slices `M`
@@ -154,15 +157,15 @@ You can pass the same arguments to the constructor of `::HomoclinicHyperbolicPro
 - returns a `HomoclinicHyperbolicProblemPBC` and an initial guess.
 """
 function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
-                            x::AbstractArray,
-                            pars,
-                            lensHom::BK.AllOpticTypes;
-                            verbose = false,
-                            ϵ0 = 1e-5, ϵ1 = 1e-5,
-                            t0 = 0, t1 = 0,
-                            maxT = Inf,
-                            freeparams = ((@optic _.ϵ0), (@optic _.T)),
-                            kw...)
+                              x::AbstractArray,
+                              pars,
+                              lensHom::BK.AllOpticTypes;
+                              verbose = false,
+                              ϵ0 = 1e-5, ϵ1 = 1e-5,
+                              t0 = 0, t1 = 0,
+                              maxT = Inf,
+                              freeparams = ((@optic _.ϵ0), (@optic _.T)),
+                              kw...)
     println("="^40)
     @assert coll.N > 0
     T = getperiod(coll, x)
@@ -183,10 +186,10 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
     if t1 == t0 == 0
         # find x0 and x1 on the unstable / stable subspace
         indUS = findfirst(norm(solpo(t) - xsaddle) > ϵ0 for t in time .+ tsaddle)
-        t0 = mod(time[indUS]+tsaddle, T)
+        t0 = mod(time[indUS] + tsaddle, T)
         x0 = solpo(t0)
         indS = findlast(norm(solpo(t) - xsaddle) > ϵ1 for t in time .+ t0)
-        t1 = time[indS]+t0
+        t1 = time[indS] + t0
         x1 = solpo(t1)
     else
         x0 = solpo(t0)
@@ -239,9 +242,9 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
 end
 
 function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
-                            x::NamedTuple{(:mesh, :sol, :_mesh), Tuple{Vector{Tp}, Vector{Tp}, Vector{Tp}}},
-                            pars,
-                            lensHom::BK.AllOpticTypes; k...) where Tp
+                              x::BK.POSolutionAndState,
+                              pars,
+                              lensHom::BK.AllOpticTypes; k...)
     n, m, _ = size(coll)
     coll2 = deepcopy(coll)
     BK.update_mesh!(coll2, x.mesh[1:m:end])

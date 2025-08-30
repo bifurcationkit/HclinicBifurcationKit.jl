@@ -332,7 +332,7 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
     end
 
     probhom_bk = BifurcationProblem(𝐇𝐨𝐦, homguess, BK.getparams(𝐇𝐨𝐦), lens;
-        J = (x,p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z,p), x),
+        J = (x, p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z,p), x),
         record_from_solution = (x, p; k...) -> begin
             if length(𝐇𝐨𝐦.freelens) == 1
                 lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @optic _.FreeP1))
@@ -350,10 +350,12 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
 
     event = ContinuousEvent(16, testHom, false, ("NNS", "NSF", "NFF", "DRS", "DRU", "NDS", "NDU", "TLS", "TLU", "NCH", "SH", "BT", "OFU", "OFS", "IFU", "IFS"), 0)
 
+    finalizer = 𝐇𝐨𝐦.updateEveryStep == 0 ? get(kwargs, :finalise_solution, BK.finalise_default) : updateHom
+
     return BK.continuation(probhom_bk, alg, _contParams;
-        finalise_solution = 𝐇𝐨𝐦.updateEveryStep == 0 ? get(kwargs, :finalise_solution, BK.finalise_default) : updateHom,
+        finalise_solution = finalizer,
         kind = HomoclinicHyperbolicSaddleCont(),
-        event = event,
+        event,
         kwargs...)
 end
 ####################################################################################################
@@ -448,7 +450,7 @@ function BK.continuation(prob_vf,
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 
     printstyled("──> convergence to saddle point:\n", color = :magenta)
-    solsaddle = BK.solve(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), Newton(), NewtonPar(verbose = true), norm = x->norm(x,Inf))
+    solsaddle = BK.solve(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), Newton(), NewtonPar(verbose = true), norm = BK.norminf)
     if BK.converged(solsaddle)
         xsaddle .= solsaddle.u
     end

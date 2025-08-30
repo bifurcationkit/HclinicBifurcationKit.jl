@@ -95,7 +95,7 @@ ylims!(0,1.5)
 ```@example TUTOPL
 # plotting function
 function plotPO(x, p; k...)
-	xtt = BK.get_periodic_orbit(p.prob, x, set(getparams(p.prob), BK.getlens(p.prob), p.p))
+	xtt = BK.get_periodic_orbit(p.prob, x, p.p)
 	plot!(xtt.t, xtt[1,:]; markersize = 2, k...)
 	plot!(xtt.t, xtt[6,:]; k...)
 	scatter!(xtt.t, xtt[1,:]; markersize = 1, legend = false, k...)
@@ -103,9 +103,9 @@ end
 
 # record function
 function recordPO(x, p; k...)
-	xtt = BK.get_periodic_orbit(p.prob, x, set(getparams(p.prob), BK.getlens(p.prob), p.p))
+	xtt = BK.get_periodic_orbit(p.prob, x, p.p)
 	period = BK.getperiod(p.prob, x, p.p)
-	return (max = maximum(xtt[6,:]), min = minimum(xtt[6,:]), period = period, )
+	return (;max = maximum(xtt[6,:]), min = minimum(xtt[6,:]), period, )
 end
 
 # newton parameters
@@ -195,7 +195,7 @@ ylims!(0.1,1.5)
 
 ```@example TUTOPL
 using DifferentialEquations
-probsh = ODEProblem(OPL!, copy(z0), (0., 1000.), par_OPL; abstol = 1e-12, reltol = 1e-10)
+probsh = ODEProblem(OPL!, copy(z0), (0., 1.), par_OPL; abstol = 1e-12, reltol = 1e-10)
 
 # newton parameters
 optn_po = NewtonPar(verbose = true, tol = 1e-8,  max_iterations = 25)
@@ -276,7 +276,6 @@ plot!(br_hom_c, branchlabel = "Hc₀", vars = (:a, :b))
 plot!(br_hom_sh, branchlabel = "Hsh₀", vars = (:a, :b), linewidth = 3)
 ylims!(0,1.5)
 ```
-
 
 ## References
 

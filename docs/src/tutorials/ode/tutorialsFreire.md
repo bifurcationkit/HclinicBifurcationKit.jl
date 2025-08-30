@@ -45,7 +45,7 @@ nothing #hide
 We first compute the branch of equilibria
 
 ```@example TUTFREIRE
-opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, detect_bifurcation = 3, max_bisection_steps = 25, nev = 3)
+opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, nev = 3)
 
 br = continuation(prob, PALC(tangent = Bordered()), opts_br, normC = norminf)
 
@@ -62,7 +62,7 @@ br
 
 
 ```@example TUTFREIRE
-sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, dsmax = 0.01, max_steps = 80) ;
+sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, dsmax = 0.01, max_steps = 80) ;
 	alg = PALC(),
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
@@ -108,7 +108,7 @@ br_hom_c = continuation(
 			# we use mesh adaptation
 			PeriodicOrbitOCollProblem(50, 3; meshadapt = false, K = 200),
 			PALC(tangent = Bordered()),
-			setproperties(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
+			setproperties(opts_br, max_steps = 30, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
 	verbosity = 0, plot = false,
 	ϵ0 = 1e-5, amplitude = 2e-3,
 	# freeparams = ((@optic _.T), (@optic _.ϵ1),)
@@ -128,14 +128,14 @@ using DifferentialEquations
 probsh = ODEProblem(freire!, copy(z0), (0., 1000.), par_freire; abstol = 1e-12, reltol = 1e-10)
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 7)
-optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-4, dsmin = 1e-6, dsmax = 1e-3, plot_every_step = 1,max_steps = 10, detect_bifurcation = 0, save_sol_every_step = 1)
+optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-3, dsmin = 1e-6, dsmax = 3e-2, plot_every_step = 50, max_steps = 200, detect_bifurcation = 0)
 
 br_hom_sh = continuation(
 			prob,
 			btpt,
 			ShootingProblem(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
 			PALC(tangent = Bordered()),
-			setproperties(optc_hom, max_steps = 200, save_sol_every_step = 1, ds = 1e-3, dsmax = 3e-2, plot_every_step = 50, detect_event = 2, a = 0.9, p_min = -1.01);
+			setproperties(optc_hom, detect_event = 2, a = 0.9, p_min = -1.01);
 	verbosity = 1, plot = true,
 	ϵ0 = 1e-6, amplitude = 2e-2,
 	update_every_step = 2,
