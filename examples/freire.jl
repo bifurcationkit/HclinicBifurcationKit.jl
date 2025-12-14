@@ -24,7 +24,7 @@ opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n
 br = continuation(prob, PALC(tangent = Bordered()), opts_br;
 bothside = false, normC = norminf)
 
-plot(br, plotfold=true)
+plot(br, plotfold = true)
 ####################################################################################################
 # DefCon
 alg = DefCont(deflation_operator = DeflationOperator(2, dot, .001, [z0]), perturb_solution = (x,p,id) -> (x  .+ 0.03 .* rand(length(x))))
@@ -42,7 +42,7 @@ sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifur
     )
 
 plot(sn_br)
-bt = get_normal_form(sn_br, 2, verbose = true, detailed = true, autodiff = false)
+bt = get_normal_form(sn_br, 2, verbose = true, detailed = Val(true), autodiff = false)
 
 hopf_br = continuation(br, 4, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
     detect_codim2_bifurcation = 2,

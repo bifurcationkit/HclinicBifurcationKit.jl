@@ -434,7 +434,7 @@ function BK.continuation(prob_vf,
     # define initial guess for newton
     prob_vf = re_make(prob_vf, params = pars)
     xflow, bvp = initBVPforPBC(bvp, prob_vf, Hom; N, T, ϵ)
-    bvp = BK._set_params_po(bvp, pars)
+    bvp = BK._set_params_in_po(bvp, pars)
 
     # define problem for Homoclinic functional
     J = BK.jacobian(prob_vf, xsaddle, pars)

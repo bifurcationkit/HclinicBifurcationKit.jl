@@ -1,6 +1,6 @@
 using Pkg
 
-using Documenter, HclinicBifurcationKit, Setfield, BifurcationKit
+using Documenter, HclinicBifurcationKit, BifurcationKit
 ENV["GKSwstype"] = "100"
 
 # to display progress

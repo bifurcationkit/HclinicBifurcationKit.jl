@@ -49,7 +49,7 @@ opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n
 
 br = continuation(prob, PALC(tangent = Bordered()), opts_br, normC = norminf)
 
-scene = plot(br, plotfold=true)
+scene = plot(br, plotfold = true)
 ```
 
 With detailed information:
@@ -124,7 +124,7 @@ plot!(br_hom_c, branchlabel = "Hom")
 ## Branch of homoclinic orbits with Multiple Shooting
 
 ```@example TUTFREIRE
-using DifferentialEquations
+using OrdinaryDiffEq
 probsh = ODEProblem(freire!, copy(z0), (0., 1000.), par_freire; abstol = 1e-12, reltol = 1e-10)
 
 optn_hom = NewtonPar(verbose = true, tol = 1e-10, max_iterations = 7)

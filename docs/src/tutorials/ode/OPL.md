@@ -194,7 +194,7 @@ ylims!(0.1,1.5)
 ## Branch of homoclinic orbits with Multiple Shooting
 
 ```@example TUTOPL
-using DifferentialEquations
+using OrdinaryDiffEq
 probsh = ODEProblem(OPL!, copy(z0), (0., 1.), par_OPL; abstol = 1e-12, reltol = 1e-10)
 
 # newton parameters
@@ -280,4 +280,3 @@ ylims!(0,1.5)
 ## References
 
 [^Pusuluri]:> Pusuluri, K, H G E Meijer, and A L Shilnikov. “Homoclinic Puzzles and Chaos in a Nonlinear Laser Model,” n.d.
-
