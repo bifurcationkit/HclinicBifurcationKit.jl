@@ -79,7 +79,7 @@ function initBVPforPBC(bvp0::ShootingProblem, prob_vf, Hom; N, T, ϵ)
 end
 
 @views function (hom::HomoclinicHyperbolicProblemPBC{Tbvp, Nf})(x::ArrayPartition, par0) where {Tbvp <: ShootingProblem, Nf}
-    @unpack N = hom
+    (;N) = hom
     sh = hom.bvp
     ns = hom.nStable
     nu = hom.nUnstable

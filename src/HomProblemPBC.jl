@@ -64,7 +64,7 @@ function HomoclinicHyperbolicProblemPBC(bvp::Tbvp,
     T = convert(Ty, T)
     ϵ0 = convert(Ty, ϵ0)
     ϵ1 = convert(Ty, ϵ1)
-    @unpack Qs0, Qu0, nStable, nUnstable = get_S_U_stableSpaces(J)
+    (;Qs0, Qu0, nStable, nUnstable) = get_S_U_stableSpaces(J)
     Nfree = length(freeparams)
     @assert Nfree < 3 "At most 2 homoclinic parameters"
     test0 = (NNS=one(T), NSF=one(T), NFF=one(T), DRS=one(T), DRU=one(T), NDS=one(T), NDU=one(T), TLS=one(T), TLU=one(T), NCH=one(T), SH=one(T), BT=one(T),OFU=one(T), OFS=one(T), IFU=one(T), IFS=one(T))
@@ -119,7 +119,7 @@ function ricattiEq(Ts, Y)
 end
 
 function _changeHomParameters(hom::HomoclinicHyperbolicProblemPBC, xpar)
-    @unpack T, ϵ0, ϵ1 = hom
+    (;T, ϵ0, ϵ1) = hom
     lensp = hom.freelens
     for (id, l) in enumerate(lensp)
         T, ϵ0, ϵ1 = set((;T, ϵ0, ϵ1), l, xpar[1+id])
@@ -277,7 +277,7 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
 
         # compute the jacobian
         J = ForwardDiff.jacobian(z -> getVectorField(𝐇𝐨𝐦.bvp, z, newpar ), z.u.x[2])
-        @unpack Qs0, Qu0, nStable, nUnstable = get_S_U_stableSpaces(J)
+        (;Qs0, Qu0, nStable, nUnstable) = get_S_U_stableSpaces(J)
 
         # this is a Hack for Orthogonal collocation
         if success && (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem) && 𝐇𝐨𝐦.bvp.meshadapt

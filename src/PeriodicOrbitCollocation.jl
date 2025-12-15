@@ -146,7 +146,7 @@ Generate a homoclinic to hyperbolic saddle problem from a periodic solution obta
 - `coll` a `PeriodicOrbitOCollProblem` which provide basic information, like the number of time slices `M`
 - `x::AbstractArray` initial guess
 - `pars` parameters
-- `lensHom::Lens` parameter axis for continuation
+- `lensHom` parameter axis for continuation
 - `ϵ0, ϵ1`: specify the distance to the saddle point of x₀, x₁
 - `t0, t1`: specify the time corresponding to x₀, x₁. Overwrite the part with `ϵ0, ϵ1` if set.
 
@@ -244,7 +244,8 @@ end
 function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
                               x::BK.POSolutionAndState,
                               pars,
-                              lensHom::BK.AllOpticTypes; k...)
+                              lensHom::BK.AllOpticTypes;
+                              k...)
     n, m, _ = size(coll)
     coll2 = deepcopy(coll)
     BK.update_mesh!(coll2, x.mesh[1:m:end])
