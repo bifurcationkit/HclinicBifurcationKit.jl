@@ -42,7 +42,7 @@ sn_br = continuation(br, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurc
     )
 
 plot(sn_br)
-bt = get_normal_form(sn_br, 2, verbose = true, detailed = true, autodiff = false)
+bt = get_normal_form(sn_br, 2, verbose = true, detailed = Val(true), autodiff = false)
 
 hopf_br = continuation(br, 2, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
     detect_codim2_bifurcation = 2,

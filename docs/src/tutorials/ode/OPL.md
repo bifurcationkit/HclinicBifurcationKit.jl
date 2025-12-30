@@ -206,7 +206,7 @@ opts_po_cont = ContinuationPar(dsmax = 0.075, ds= -0.001, dsmin = 1e-4, p_max = 
 br_sh = continuation(
 	br2, 1,
 	opts_po_cont,
-	ShootingProblem(8, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-11);
+	ShootingProblem(8, probsh, Rodas5P(); parallel = false, abstol = 1e-13, reltol = 1e-11);
 	ampfactor = 1., δp = 0.0015,
 	verbosity = 2,	plot = true,
 	record_from_solution = recordPO,
@@ -228,7 +228,8 @@ plot(_sol.t, _sol[1:3,:]')
 ```@example TUTOPL
 # homoclinic
 probhom, solh = generate_hom_problem(
-	br_sh.prob.prob, br_sh.sol[end].x,
+	br_sh.prob.prob, 
+	br_sh.sol[end].x,
 	BK.setparam(br_sh, br_sh.sol[end].p),
 	BK.getlens(br_sh);
 	verbose = true,
@@ -274,7 +275,7 @@ plot(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "AH₁₂", vars = (:a, :b))
 plot!(br_hom_c, branchlabel = "Hc₀", vars = (:a, :b))
 plot!(br_hom_sh, branchlabel = "Hsh₀", vars = (:a, :b), linewidth = 3)
-ylims!(0,1.5)
+ylims!(0, 1.5)
 ```
 
 ## References

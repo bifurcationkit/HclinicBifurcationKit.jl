@@ -5,8 +5,6 @@ module HclinicBifurcationKit
     using RecursiveArrayTools: ArrayPartition
     const BK = BifurcationKit
 
-
-
     include("HomProblemPBC.jl")
     include("HomUtils.jl")
     include("contKind.jl")

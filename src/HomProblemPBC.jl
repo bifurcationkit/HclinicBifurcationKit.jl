@@ -2,6 +2,7 @@
 Computation of homoclinic orbit to an hyperbolic saddle based on the projection boundary condition (PBC) method.
 $(SIGNATURES)
 
+# Internal fields
 $(TYPEDFIELDS)
 """
 mutable struct HomoclinicHyperbolicProblemPBC{Tbvp, Nfree, Tlens, Ty, Tlensfree, Tq, Tt} <: BK.AbstractBoundaryValueProblem
@@ -138,9 +139,8 @@ function generate_hom_solution(pb::BK.AbstractBoundaryValueProblem, orbit, T)
     orbitguess_v
 end
 ####################################################################################################
-
-getVectorField(bvp::ShootingProblem,x,p) = BK.vf(bvp.flow,x,p)
-getVectorField(bvp::PeriodicOrbitOCollProblem,x,p) = BK.residual(bvp.prob_vf,x,p)
+getVectorField(bvp::ShootingProblem, x, p) = vf(bvp.flow, x, p)
+getVectorField(bvp::PeriodicOrbitOCollProblem, x, p) = BK.residual(bvp.prob_vf, x, p)
 
 function get_tests_for_HHS(𝐇𝐨𝐦, J, z, xₛ, x₀, x₁, T::Ty, pars; tol = 1e-5) where Ty
     F = eigen(J)
@@ -332,7 +332,7 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
     end
 
     probhom_bk = BifurcationProblem(𝐇𝐨𝐦, homguess, BK.getparams(𝐇𝐨𝐦), lens;
-        J = (x, p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z,p), x),
+        J = (x, p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z, p), x),
         record_from_solution = (x, p; k...) -> begin
             if length(𝐇𝐨𝐦.freelens) == 1
                 lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @optic _.FreeP1))
@@ -384,7 +384,8 @@ function BK.continuation(prob_vf,
             bvp::BK.AbstractBoundaryValueProblem,
             alg::BK.AbstractContinuationAlgorithm,
             _contParams::ContinuationPar ;
-            ϵ0 = 1e-5, amplitude = 1e-3,
+            ϵ0 = 1e-5, 
+            amplitude = 1e-3,
             freeparams = ((@optic _.ϵ0), (@optic _.T)),
             maxT = Inf,
             update_every_step = 1,

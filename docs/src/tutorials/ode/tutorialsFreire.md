@@ -91,7 +91,7 @@ function plotHom(x,p;k...)
 	par0 = set(par0, p.lens, p.p)
 	sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
 	m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
-	plot!(sol.t, sol[1:3,:]',subplot=3, markersize = 1, marker=m)
+	plot!(sol.t, sol[1:3,:]',subplot = 3, markersize = 1, marker = m)
 end
 ```
 

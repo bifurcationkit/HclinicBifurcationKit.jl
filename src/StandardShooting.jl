@@ -1,5 +1,5 @@
-getF(hom::HomoclinicHyperbolicProblemPBC{<: ShootingProblem},x,p) = BK.vf(hom.bvp.flow, x, p)
-
+vf(flow, x, pars) = BK.vf(flow, x, pars) # TODO! make it BK.vector_field(flow, x, pars)
+getF(hom::HomoclinicHyperbolicProblemPBC{<: ShootingProblem},x,p) = vf(hom.bvp.flow, x, p)
 ################################################################################
 """
 Custom section which align with the part of the orbit with largest norm. It thus keep track of the index of the time at which this occurs.
@@ -30,8 +30,8 @@ end
 # this function updates the section during the continuation run
 function BK.updatesection!(sh::ShootingProblem{Tf, Tjac, Ts, Tsection }, x, par) where {Tf <: BK.AbstractFlow, Tjac <: BK.AbstractJacobianType, Ts, Tsection <: SectionSSmax}
     xt = BK.get_time_slices(sh, x)
-    ind = argmax(norm(xt[:, i]) for i=1:size(xt, 2))
-    @views BK.update!(sh.section, BK.vf(sh.flow, xt[:, ind], par), xt[:, ind], ind)
+    ind = argmax(norm(xt[:, i]) for i = 1:size(xt, 2))
+    @views BK.update!(sh.section, vf(sh.flow, xt[:, ind], par), xt[:, ind], ind)
     sh.section.normal ./= norm(sh.section.normal)
     return true
 end
@@ -203,10 +203,10 @@ function generate_hom_problem(sh::ShootingProblem,
 
     # find the saddle point as minimum of vector field norm
     xc = BK.get_time_slices(sh, x)
-    ind_saddle = argmin(norm(BK.vf(sh.flow, solpo(t), pars)) for t in time)
+    ind_saddle = argmin(norm(vf(sh.flow, solpo(t), pars)) for t in time)
     xsaddle = solpo(time[ind_saddle])
     tsaddle = time[ind_saddle]
-    solsaddle = BK.solve(BifurcationProblem((x,p) -> BK.vf(sh.flow,x,p),xsaddle,pars), Newton(), NewtonPar(verbose = true), norm = x->norm(x,Inf))
+    solsaddle = BK.solve(BifurcationProblem((x,p) -> vf(sh.flow, x, p), xsaddle, pars), Newton(), NewtonPar(verbose = true), norm = BK.norminf)
     if BK.converged(solsaddle)
         xsaddle .= solsaddle.u
     end
@@ -246,7 +246,7 @@ function generate_hom_problem(sh::ShootingProblem,
     ϵ1hom = norm(x1 - xsaddle)
 
     # define problem for Homoclinic functional
-    J = ForwardDiff.jacobian(x -> BK.vf(sh.flow, x, pars), xsaddle)
+    J = ForwardDiff.jacobian(x -> vf(sh.flow, x, pars), xsaddle)
     𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp,
                                 lensHom,
                                 length(xsaddle),

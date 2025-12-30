@@ -1,6 +1,6 @@
-using Revise, Plots
+using Revise
 using LinearAlgebra, Test
-using BifurcationKit, Test
+using BifurcationKit, Plots
 using HclinicBifurcationKit
 const BK = BifurcationKit
 

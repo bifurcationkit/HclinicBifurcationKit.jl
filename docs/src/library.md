@@ -17,7 +17,7 @@ HclinicBifurcationKit.HomoclinicHyperbolicProblemPBC
 ## Continuation
 
 ```@docs
-BifurcationKit.continuation(𝐇𝐨𝐦::HclinicBifurcationKit.HomoclinicHyperbolicProblemPBC,homguess,lens::Lens,alg::BifurcationKit.AbstractContinuationAlgorithm,_contParams::ContinuationPar;kwargs...)
+BifurcationKit.continuation(𝐇𝐨𝐦::HclinicBifurcationKit.HomoclinicHyperbolicProblemPBC,homguess,lens::BifurcationKit.AllOpticTypes,alg::BifurcationKit.AbstractContinuationAlgorithm,_contParams::ContinuationPar;kwargs...)
 ```
 
 ```@docs

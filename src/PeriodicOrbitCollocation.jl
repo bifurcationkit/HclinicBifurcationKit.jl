@@ -71,8 +71,9 @@ Implements
     return phase / getperiod(pb, u, nothing)
 end
 
+# residual function
 @views function (hom::HomoclinicHyperbolicProblemPBC{Tbvp, Nf})(x::ArrayPartition, par0) where {Tbvp <: PeriodicOrbitOCollProblem, Nf}
-    @unpack N = hom
+    (;N) = hom
     coll = hom.bvp
     ns = hom.nStable
     nu = hom.nUnstable
@@ -99,9 +100,9 @@ end
     x1 = uc[:, end]
 
     # version of collocation problem without boundary condition
-    _resuc = similar(uc, N, size(uc,2)-1)
+    _resuc = similar(uc, N, size(uc, 2) - 1)
     resu = vec(_resuc)
-    BK.functional_coll_bare!(coll, _resuc, uc, T, BK.get_Ls(coll.mesh_cache), par)
+    BK.po_residual_bare!(coll, _resuc, uc, T, BK.get_Ls(coll.mesh_cache), par)
 
     # F(xsaddle, par) = 0
     Fx = getF(hom, xsaddle, par)
@@ -200,12 +201,12 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
     # we put a uniform mesh in bvp even if coll is non uniform
     n, m, Ntst = size(coll)
     bvp = deepcopy(coll)
-    bvp = BK.set_collocation_size(bvp, Ntst, m)
+    # bvp = BK.set_collocation_size(bvp, Ntst, m)
     @reset bvp.update_section_every_step = 0
-    BK.update_mesh!(bvp, LinRange{eltype(coll)}( 0, 1, Ntst + 1) |> collect)
+    # BK.update_mesh!(bvp, LinRange{eltype(coll)}(0, 1, Ntst + 1) |> collect)
     bvp = BK._set_params_in_po(bvp, pars)
 
-    Thom = min(mod(t1-t0, T), maxT)
+    Thom = min(mod(t1 - t0, T), maxT)
     xflow = mapreduce(t -> solpo(t0 + t * Thom), vcat, BK.get_times(bvp))
     BK.updatesection!(bvp, vcat(xflow, Thom), BK.getparams(bvp))
 
