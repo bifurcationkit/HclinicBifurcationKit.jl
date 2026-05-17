@@ -23,7 +23,7 @@ BifurcationKit.continuation(𝐇𝐨𝐦::HclinicBifurcationKit.HomoclinicHyperb
 ```@docs
 BifurcationKit.continuation(prob_vf,
 			bt::BifurcationKit.BogdanovTakens,
-			bvp::BifurcationKit.AbstractBoundaryValueProblem,
+			bvp::BifurcationKit.AbstractBoundaryValueDiscretization,
 			alg::BifurcationKit.AbstractContinuationAlgorithm,
 			_contParams::ContinuationPar ;
 			ϵ0 = 1e-5, amplitude = 1e-3,

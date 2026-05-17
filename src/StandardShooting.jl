@@ -1,5 +1,5 @@
-vf(flow, x, pars) = BK.vf(flow, x, pars) # TODO! make it BK.vector_field(flow, x, pars)
-getF(hom::HomoclinicHyperbolicProblemPBC{<: ShootingProblem},x,p) = vf(hom.bvp.flow, x, p)
+vf(flow, x, pars) = BK.vector_field(flow, x, pars)
+getF(hom::HomoclinicHyperbolicProblemPBC{<: Shooting}, x, p) = BK.vector_field(BK.get_discretization(hom).flow, x, p)
 ################################################################################
 """
 Custom section which align with the part of the orbit with largest norm. It thus keep track of the index of the time at which this occurs.
@@ -7,10 +7,8 @@ Custom section which align with the part of the orbit with largest norm. It thus
 mutable struct SectionSSmax{Tn, Tc}  <: BK.AbstractSection
     "Normal to define hyperplane"
     normal::Tn
-
     "Representative point on hyperplane"
     center::Tc
-
     "index of max norm"
     ind::Int
 end
@@ -28,17 +26,17 @@ function BK.update!(sect::SectionSSmax, normal, center, ind)
 end
 
 # this function updates the section during the continuation run
-function BK.updatesection!(sh::ShootingProblem{Tf, Tjac, Ts, Tsection }, x, par) where {Tf <: BK.AbstractFlow, Tjac <: BK.AbstractJacobianType, Ts, Tsection <: SectionSSmax}
+function BK.updatesection!(sh::Shooting{Tf, Tjac, Ts, Tsection }, x, par) where {Tf <: BK.AbstractFlow, Tjac <: BK.AbstractJacobianType, Ts, Tsection <: SectionSSmax}
     xt = BK.get_time_slices(sh, x)
     ind = argmax(norm(xt[:, i]) for i = 1:size(xt, 2))
-    @views BK.update!(sh.section, vf(sh.flow, xt[:, ind], par), xt[:, ind], ind)
+    @views BK.update!(sh.section, BK.vector_field(sh.flow, xt[:, ind], par), xt[:, ind], ind)
     sh.section.normal ./= norm(sh.section.normal)
     return true
 end
 
 ################################################################################
-function get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tbvp}, x::ArrayPartition, par0; kode...) where {Tbvp <: ShootingProblem}
-    sh = hom.bvp
+function get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tdisc}, x::ArrayPartition, par0; kode...) where {Tdisc <: Shooting}
+    sh = BK.get_discretization(hom)
     M = BK.get_mesh_size(sh)
 
     # get the updated parameter
@@ -51,8 +49,8 @@ function get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tbvp}, x::Arra
     T, ϵ0, ϵ1 = _changeHomParameters(hom, x.x[5])
 
     if  M>=1
-        # return evolve(hom.bvp.flow, Val(:Full), xflow, par, T/M; kode...)
-        return get_periodic_orbit(hom.bvp, vcat(xflow, T), par; kode...)
+        # return evolve(sh.flow, Val(:Full), xflow, par, T/M; kode...)
+        return get_periodic_orbit(sh, vcat(xflow, T), par; kode...)
     else
         xshc = reshape(xflow, N, M)
         sol = [evolve(sh.flow, Val(:Full), xshc[:, ii], par, T/M; kode...) for ii in 1:M]
@@ -65,7 +63,7 @@ function get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tbvp}, x::Arra
     end
 end
 
-function initBVPforPBC(bvp0::ShootingProblem, prob_vf, Hom; N, T, ϵ)
+function initBVPforPBC(bvp0::Shooting, prob_vf, Hom; N, T, ϵ)
     M = BK.get_mesh_size(bvp0)
     dt = 2T/M
     xflow = reduce(vcat, [Hom.orbit(-T + n*dt, ϵ) for n = 0:M-1] )
@@ -78,9 +76,9 @@ function initBVPforPBC(bvp0::ShootingProblem, prob_vf, Hom; N, T, ϵ)
     return xflow, bvp
 end
 
-@views function (hom::HomoclinicHyperbolicProblemPBC{Tbvp, Nf})(x::ArrayPartition, par0) where {Tbvp <: ShootingProblem, Nf}
+@views function (hom::HomoclinicHyperbolicProblemPBC{Tbvp, Nf})(x::ArrayPartition, par0) where {Tbvp <: Shooting, Nf}
     (;N) = hom
-    sh = hom.bvp
+    sh = BK.get_discretization(hom)
     ns = hom.nStable
     nu = hom.nUnstable
 
@@ -169,7 +167,7 @@ $(TYPEDSIGNATURES)
 Generate a homoclinic to hyperbolic saddle problem from a periodic solution obtained with problem `pb`.
 
 ## Arguments
-- `sh` a `ShootingProblem` which provide basic information, like the number of time slices `M`
+- `sh` a `Shooting` which provide basic information, like the number of time slices `M`
 - `x::AbstractArray` initial guess
 - `pars` parameters
 - `lensHom::BK.AllOpticTypes` parameter axis for continuation
@@ -182,7 +180,7 @@ You can pass the same arguments to the constructor of `::HomoclinicHyperbolicPro
 ## Output
 - returns a `HomoclinicHyperbolicProblemPBC` and an initial guess.
 """
-function generate_hom_problem(sh::ShootingProblem,
+function generate_hom_problem(sh::Shooting,
                             x::AbstractArray,
                             pars,
                             lensHom::BK.AllOpticTypes;

@@ -15,5 +15,4 @@ module HclinicBifurcationKit
     export generate_hom_problem, get_homoclinic_orbit
 
     BK.get_lenses(br::BK.AbstractResult{ <: HomoclinicHyperbolicSaddleCont}) = (getlens(br.prob), getlens(br.prob.VF.F))
-
 end

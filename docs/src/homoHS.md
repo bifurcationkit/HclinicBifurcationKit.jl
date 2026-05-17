@@ -29,13 +29,13 @@ Basically, we truncate the homoclinic orbit on $[-T,T]$ and we impose that $u(-T
 There are thus at most 3 free parameters and $T,\epsilon_0,\epsilon_1$ and the user can **either**
 
 - chose one as a free parameter, for example $T$
-- chose two as a free parameters, for example $T,\epsilon_1$
+- chose two as free parameters, for example $T,\epsilon_1$
 
 
 
 ## Continuation
 
-Please see the tutorials for examples. In a nutshell, you can compute homolinic orbits by setting up a [`HomoclinicHyperbolicProblemPBC`](@ref) or by branching from a Bogdanov-Takens point.
+Please see the tutorials for examples. In a nutshell, you can compute homoclinic orbits by setting up a [`HomoclinicHyperbolicProblemPBC`](@ref) or by branching from a Bogdanov-Takens point.
 
 ## Detection of codim 2 bifurcation points
 

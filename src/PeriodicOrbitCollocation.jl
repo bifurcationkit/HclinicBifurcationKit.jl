@@ -1,34 +1,34 @@
-getF(hom::HomoclinicHyperbolicProblemPBC{Tbvp}, x, p) where {Tbvp <: PeriodicOrbitOCollProblem} = BK.residual(hom.bvp.prob_vf, x, p)
+getF(hom::HomoclinicHyperbolicProblemPBC{Tdisc}, x, p) where {Tdisc <: Collocation} = BK.residual(BK.get_discretization(hom).prob_vf, x, p)
 
-get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tbvp}, x::ArrayPartition, par; k...) where {Tbvp <: PeriodicOrbitOCollProblem} = get_periodic_orbit(hom.bvp, vcat(x.x[1], hom.T), par)
+get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tdisc}, x::ArrayPartition, par; k...) where {Tdisc <: Collocation} = get_periodic_orbit(BK.get_discretization(hom), vcat(x.x[1], hom.T), par)
 
-function generate_hom_solution(pb::PeriodicOrbitOCollProblem, orbit0, T)
+function generate_hom_solution(pb::Collocation, orbit0, T)
     orbit = t -> orbit0(-T + t * (2T))
     generate_solution(pb, orbit, 1.)[1:end-1]
 end
 
-function initBVPforPBC(bvp::PeriodicOrbitOCollProblem, prob_vf, Hom; N, T, ϵ)
-    @reset bvp.N = N
-    bvp = setproperties(bvp; prob_vf = prob_vf, ϕ = zeros(length(bvp)), xπ = zeros(length(bvp)), update_section_every_step = 0)
-    _N, m, Ntst = size(bvp)
-    bvp = BK.set_collocation_size(bvp, Ntst, m)
-    cache = BK.POCollCache(eltype(bvp), Ntst, N, m)
-    @reset bvp.cache = cache
-    xflow = generate_hom_solution(bvp, t -> Hom.orbit(t, ϵ), T)
-    BK.updatesection!(bvp, vcat(xflow, 2T), BK.getparams(bvp))
-    return xflow, bvp
+function initBVPforPBC(coll::Collocation, prob_vf, Hom; N, T, ϵ)
+    @reset coll.N = N
+    coll = setproperties(coll; prob_vf = prob_vf, ϕ = zeros(length(coll)), xπ = zeros(length(coll)), update_section_every_step = 0)
+    _N, m, Ntst = size(coll)
+    coll = BK.set_collocation_size(coll, Ntst, m)
+    cache = BK.POCollCache(eltype(coll), Ntst, N, m)
+    @reset coll.cache = cache
+    xflow = generate_hom_solution(coll, t -> Hom.orbit(t, ϵ), T)
+    BK.updatesection!(coll, vcat(xflow, 2T), BK.getparams(coll))
+    return xflow, coll
 end
 
 """
 $(SIGNATURES)
 
-This function generates an initial guess for the solution of the problem `pb` based on the orbit `t -> orbit(t)` for t ∈ [-T,T] and half time return `T`.
+This function generates an initial guess for the solution of the problem `pb` based on the orbit `t -> orbit(t)` for t ∈ [-T, T] and half time return `T`.
 """
-function generate_homoclinic_solution(pb::PeriodicOrbitOCollProblem, orbit, T)
-    n, _m, Ntst = size(pb)
-    ts = BK.get_times(pb)
+function generate_homoclinic_solution(disc::Collocation, orbit, T)
+    n, _m, Ntst = size(disc)
+    ts = BK.get_times(disc)
     Nt = length(ts)
-    ci = zeros(eltype(pb), n, Nt)
+    ci = zeros(eltype(disc), n, Nt)
     for (l, t) in pairs(ts)
         ci[:, l] .= orbit(-T + t * (2T))
     end
@@ -39,7 +39,7 @@ end
 Implements
     ∫ < u - v, vₜ >
 """
-@views function phase_condition_PBC(pb::PeriodicOrbitOCollProblem, (u, uc), (L, ∂L))
+@views function phase_condition_PBC(pb::Collocation, (u, uc), (L, ∂L))
     Ty = eltype(uc)
     phase = zero(Ty)
 
@@ -72,9 +72,9 @@ Implements
 end
 
 # residual function
-@views function (hom::HomoclinicHyperbolicProblemPBC{Tbvp, Nf})(x::ArrayPartition, par0) where {Tbvp <: PeriodicOrbitOCollProblem, Nf}
-    (;N) = hom
-    coll = hom.bvp
+@views function (hom::HomoclinicHyperbolicProblemPBC{Tdisc, Nf})(x::ArrayPartition, par0) where {Tdisc <: Collocation, Nf}
+    (; N) = hom
+    coll = BK.get_discretization(hom)
     ns = hom.nStable
     nu = hom.nUnstable
 
@@ -135,6 +135,7 @@ end
 end
 
 using SciMLBase: AbstractTimeseriesSolution
+
 """
 $(TYPEDSIGNATURES)
 
@@ -144,7 +145,7 @@ Generate a homoclinic to hyperbolic saddle problem from a periodic solution obta
     In case of an adapted mesh, you can pass the `POSolutionAndState` directly in place of `x`.
 
 ## Arguments
-- `coll` a `PeriodicOrbitOCollProblem` which provide basic information, like the number of time slices `M`
+- `coll` a `Collocation` which provide basic information, like the number of time slices `M`
 - `x::AbstractArray` initial guess
 - `pars` parameters
 - `lensHom` parameter axis for continuation
@@ -157,7 +158,7 @@ You can pass the same arguments to the constructor of `::HomoclinicHyperbolicPro
 ## Output
 - returns a `HomoclinicHyperbolicProblemPBC` and an initial guess.
 """
-function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
+function generate_hom_problem(coll::Collocation,
                               x::AbstractArray,
                               pars,
                               lensHom::BK.AllOpticTypes;
@@ -242,13 +243,14 @@ function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
     return 𝐇𝐨𝐦, xhom, pars, xhom
 end
 
-function generate_hom_problem(coll::PeriodicOrbitOCollProblem,
+function generate_hom_problem(coll::Collocation,
                               x::BK.POSolutionAndState,
                               pars,
                               lensHom::BK.AllOpticTypes;
                               k...)
+    @error "here"
     n, m, _ = size(coll)
     coll2 = deepcopy(coll)
-    BK.update_mesh!(coll2, x.mesh[1:m:end])
+    BK.update_mesh!(coll2, x._mesh)
     generate_hom_problem(coll2, x.sol, pars, lensHom; k...)
 end

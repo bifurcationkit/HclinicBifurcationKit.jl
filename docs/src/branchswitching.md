@@ -8,13 +8,13 @@ Depth = 3
 
 ## Branch switching from Bogdanov-Takens (BT) point to Homoclinic curve curve
 
-We provide an automatic branch switching method in this case (see for example [Autonomous electronic circuit](@ref). Hence, you can perform automatic branch switching by calling `continuation` with the following options:
+We provide an automatic branch switching method in this case (see for example [Autonomous electronic circuit](@ref)). Hence, you can perform automatic branch switching by calling `continuation` with the following options:
 
 ```julia
 continuation(prob_vf, 
 	# bt point
 	bt,
-	# also like ShootingProblem or PeriodicOrbitOCollProblem
+	# also like Shooting or Collocation
 	bvp, 
 	# PALC, etc
 	alg, 

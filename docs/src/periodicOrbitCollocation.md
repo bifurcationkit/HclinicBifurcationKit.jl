@@ -1,9 +1,9 @@
 # Homoclinic based on orthogonal collocation
 
-We compute `Ntst` time slices of a periodic orbit using orthogonal collocation. This is implemented in the structure `BifurcationKit.PeriodicOrbitOCollProblem`.
+We compute `Ntst` time slices of a periodic orbit using orthogonal collocation. This is implemented in the structure `BifurcationKit.Collocation`.
 
 !!! warning "Large scale"
-    The current implementation is not yet optimised for large scale problems. This will be improved in the future.    
+    The current implementation is not yet optimized for large scale problems. This will be improved in the future.    
 
 The general method is explained in [BifurcationKit.jl](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitCollocation/).
 
@@ -25,7 +25,7 @@ $$\left\{\begin{aligned}
 
 ## Mesh adaptation
 
-The goal of this functionality is to adapt the mesh in order to minimise the error.
+The goal of this functionality is to adapt the mesh in order to minimize the error.
 
 ## Jacobian
 

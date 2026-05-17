@@ -23,7 +23,7 @@ If you use this package for your work, we ask that you **cite** the following pa
 
 There are several good softwares already available.
 
-- For continuation in small dimension, most softwares are listed on [DSWeb](https://ddebiftool.sourceforge.net). One can mention the widely used AUTO-07p and [MATCONT](https://sourceforge.net/projects/matcont/). All these are very reliable and some address high codimension bifurcations.
+- For continuation in small dimension, most software are listed on [DSWeb](https://ddebiftool.sourceforge.net). One can mention the widely used AUTO-07p and [MATCONT](https://sourceforge.net/projects/matcont/). All these are very reliable and some address high co-dimension bifurcations.
 
 - For large scale problems, there is none.
 

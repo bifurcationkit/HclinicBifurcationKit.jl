@@ -85,12 +85,12 @@ plot(sn_br, hopf_br, ylims = (-0.1, 1.25))
 Plotting function:
 
 ```@example TUTFREIRE
-function plotHom(x,p;k...)
+function plotHom(x, p; k...)
 	𝐇𝐨𝐦 = p.prob
 	par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
 	par0 = set(par0, p.lens, p.p)
 	sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
-	m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
+	m = (BK.get_discretization(𝐇𝐨𝐦) isa Collocation && BK.meshadapt(BK.get_discretization(𝐇𝐨𝐦))) ? :d : :none
 	plot!(sol.t, sol[1:3,:]',subplot = 3, markersize = 1, marker = m)
 end
 ```
@@ -106,7 +106,7 @@ br_hom_c = continuation(
 			prob,
 			btpt,
 			# we use mesh adaptation
-			PeriodicOrbitOCollProblem(50, 3; meshadapt = false, K = 200),
+			Collocation(50, 3; meshadapt = false, K = 200),
 			PALC(tangent = Bordered()),
 			setproperties(opts_br, max_steps = 30, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
 	verbosity = 0, plot = false,
@@ -133,7 +133,7 @@ optc_hom = ContinuationPar(newton_options = optn_hom, ds = 1e-3, dsmin = 1e-6, d
 br_hom_sh = continuation(
 			prob,
 			btpt,
-			ShootingProblem(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
+			Shooting(12, probsh, Vern9(); parallel = true, abstol = 1e-13, reltol = 1e-12),
 			PALC(tangent = Bordered()),
 			setproperties(optc_hom, detect_event = 2, a = 0.9, p_min = -1.01);
 	verbosity = 1, plot = true,

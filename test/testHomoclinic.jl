@@ -3,7 +3,6 @@
 using Test
 using BifurcationKit, LinearAlgebra, ForwardDiff, HclinicBifurcationKit
 const BK = BifurcationKit
-
 ####################################################################################################
 # test for the Bogdanov-Takens normal form
 function Fbt!(dx, x, p, t=0)
@@ -94,12 +93,12 @@ function plotHom(x,p;k...)
     par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
     par0 = set(par0, p.lens, p.p)
     sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
-    m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
+    m = (𝐇𝐨𝐦.bvp isa Collocation && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
     plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
 end
 
 br_hom = continuation(prob, btpt,
-    PeriodicOrbitOCollProblem(20, 4; meshadapt = true),
+    Collocation(20, 4; meshadapt = true),
     PALC(tangent = Bordered()),
     ContinuationPar(optc_hom, max_steps = 200, save_sol_every_step = 1, dsmax = 3e-1, plot_every_step = 3, detect_event=2);
     amplitude = 5e-3, ϵ0 = 1e-3,
@@ -125,8 +124,8 @@ _sol = get_homoclinic_orbit(br_hom.prob.VF.F, br_hom.sol[end].x, BK.setparam(br_
 #     xlims!(-0.02, 0.00001);ylims!(-0.1,0)
 ########################
 br_hom = continuation(prob, btpt,
-    # ShootingProblem(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2)]; abstol = 1e-12, reltol = 1e-11),
-    ShootingProblem(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2) for _ in 1:5]; abstol = 1e-13, reltol = 1e-11, parallel = false),
+    # Shooting(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2)]; abstol = 1e-12, reltol = 1e-11),
+    Shooting(ODEProblem(Fbt!, zeros(2), (0., 1.), par), Rodas5P(), [zeros(2) for _ in 1:5]; abstol = 1e-13, reltol = 1e-11, parallel = false),
     # PALC(tangent = Bordered()),
     PALC(),
     # MoorePenrose(),

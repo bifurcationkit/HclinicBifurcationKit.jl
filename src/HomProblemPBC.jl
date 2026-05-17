@@ -5,9 +5,9 @@ $(SIGNATURES)
 # Internal fields
 $(TYPEDFIELDS)
 """
-mutable struct HomoclinicHyperbolicProblemPBC{Tbvp, Nfree, Tlens, Ty, Tlensfree, Tq, Tt} <: BK.AbstractBoundaryValueProblem
-    "Sructure encoding the boundary value problem. For example, you can pass a `PeriodicOrbitTrapProblem`, a `PeriodicOrbitOCollProblem` or an `AbstractShootingProblem`"
-    bvp::Tbvp
+mutable struct HomoclinicHyperbolicProblemPBC{Tdisc, Nfree, Tlens, Ty, Tlensfree, Tq, Tt} <: BK.AbstractBoundaryValueProblem
+    "Sructure encoding the discretization of the boundary value problem. For example, you can pass a `Trapeze`, a `Collocation` or an `AbstractShootingProblem`."
+    disc::Tdisc
 
     "Two lenses which are used to define 2 free parameters."
     lens::Tlens
@@ -15,28 +15,28 @@ mutable struct HomoclinicHyperbolicProblemPBC{Tbvp, Nfree, Tlens, Ty, Tlensfree,
     "Return time T"
     T::Ty
 
-    "Precision of how far the section is from the homoclinic point"
+    "Precision of how far the section is from the homoclinic point."
     ϵ0::Ty
 
-    "Precision of how far the section is from the homoclinic point"
+    "Precision of how far the section is from the homoclinic point."
     ϵ1::Ty
 
     "Free parameters"
     freelens::Tlensfree
 
-    "Orthonormal Projector on the unstable subspace orthogonal"
+    "Orthonormal Projector on the unstable subspace orthogonal."
     Qu0::Tq # size = n x ns
 
-    "Orthonormal Projector on the stable subspace orthogonal"
+    "Orthonormal Projector on the stable subspace orthogonal."
     Qs0::Tq # size = n x nu
 
     "Dimension of phase space"
     N::Int64
 
-    "updates the section every `update_section_every_step` step during continuation"
+    "updates the section every `update_section_every_step` step during continuation."
     updateEveryStep::Int
 
-    "How the jacobian of the problem is computed"
+    "How the jacobian of the problem is computed."
     jacobian::Symbol
 
     test::Tt
@@ -45,31 +45,62 @@ mutable struct HomoclinicHyperbolicProblemPBC{Tbvp, Nfree, Tlens, Ty, Tlensfree,
     nUnstable::Int64
     nStable::Int64
 end
-@inline BK.getparams(pb::HomoclinicHyperbolicProblemPBC) = BK.getparams(pb.bvp)
+@inline BK.getparams(pb::HomoclinicHyperbolicProblemPBC) = BK.getparams(BK.get_discretization(pb))
 @inline BK.getlens(pb::HomoclinicHyperbolicProblemPBC) = pb.lens
+@inline BK.get_discretization(pb::HomoclinicHyperbolicProblemPBC) = pb.disc
 
-function HomoclinicHyperbolicProblemPBC(bvp::Tbvp,
+function HomoclinicHyperbolicProblemPBC(
+                disc::Tdisc,
                 lens::Tlens,
                 N::Int,
                 J::AbstractMatrix{Ty}; 
-                ϵ0 = 0.01,
-                ϵ1 = 0.01,
-                T = 100.,
+                ϵ0 = convert(Ty, 0.01),
+                ϵ1 = convert(Ty, 0.01),
+                T = convert(Ty, 100),
                 freeparams = ((@optic _.ϵ0), (@optic _.T)),
                 update_every_step = 2,
                 testOrbitFlip = false,
                 testInclinationFlip = false,
                 jacobian::Symbol = :autodiffDense
-                ) where {Ty, Tbvp, Tlens}
-    @assert ~(bvp isa PeriodicOrbitTrapProblem) "This type of BVP is not handled yet."
+                ) where {Ty, Tdisc, Tlens}
+    @assert ~(disc isa Trapeze) "This type of discretization is not handled yet."
     T = convert(Ty, T)
     ϵ0 = convert(Ty, ϵ0)
     ϵ1 = convert(Ty, ϵ1)
     (;Qs0, Qu0, nStable, nUnstable) = get_S_U_stableSpaces(J)
     Nfree = length(freeparams)
     @assert Nfree < 3 "At most 2 homoclinic parameters"
-    test0 = (NNS=one(T), NSF=one(T), NFF=one(T), DRS=one(T), DRU=one(T), NDS=one(T), NDU=one(T), TLS=one(T), TLU=one(T), NCH=one(T), SH=one(T), BT=one(T),OFU=one(T), OFS=one(T), IFU=one(T), IFS=one(T))
-    HomoclinicHyperbolicProblemPBC{Tbvp, Nfree, Tlens, Ty, typeof(freeparams), typeof(Qs0), typeof(test0)}(bvp, lens, T, ϵ0, ϵ1, freeparams, Qu0, Qs0, N, update_every_step, jacobian, test0,testOrbitFlip, testInclinationFlip, nUnstable, nStable )
+    test0 = (NNS=one(T),
+             NSF=one(T),
+             NFF=one(T),
+             DRS=one(T),
+             DRU=one(T),
+             NDS=one(T),
+             NDU=one(T),
+             TLS=one(T),
+             TLU=one(T),
+             NCH=one(T),
+             SH=one(T),
+             BT=one(T),
+             OFU=one(T),
+             OFS=one(T),
+             IFU=one(T),
+             IFS=one(T))
+    HomoclinicHyperbolicProblemPBC{Tdisc, Nfree, Tlens, Ty, typeof(freeparams), typeof(Qs0), typeof(test0)}(disc,
+                                                                                                           lens,
+                                                                                                           T,
+                                                                                                           ϵ0,
+                                                                                                           ϵ1,
+                                                                                                           freeparams,
+                                                                                                           Qu0,
+                                                                                                           Qs0,
+                                                                                                           N,
+                                                                                                           update_every_step,
+                                                                                                           jacobian,
+                                                                                                           test0,testOrbitFlip,
+                                                                                                           testInclinationFlip,
+                                                                                                           nUnstable,
+                                                                                                           nStable )
 end
 
 function Base.show(io::IO, hom::HomoclinicHyperbolicProblemPBC)
@@ -81,7 +112,7 @@ function Base.show(io::IO, hom::HomoclinicHyperbolicProblemPBC)
     println(io, "├─ update prob : ", hom.updateEveryStep)
     println(io, "└─ lens        : ", BK.get_lens_symbol(BK.getlens(hom)))
     printstyled(io, "Boundary value problem:\n"; color = :blue, bold = true)
-    show(io, hom.bvp)
+    show(io, BK.get_discretization(hom))
 end
 
 """
@@ -139,8 +170,8 @@ function generate_hom_solution(pb::BK.AbstractBoundaryValueProblem, orbit, T)
     orbitguess_v
 end
 ####################################################################################################
-getVectorField(bvp::ShootingProblem, x, p) = vf(bvp.flow, x, p)
-getVectorField(bvp::PeriodicOrbitOCollProblem, x, p) = BK.residual(bvp.prob_vf, x, p)
+getVectorField(disc::Shooting, x, p) = vf(disc.flow, x, p)
+getVectorField(disc::Collocation, x, p) = BK.residual(disc.prob_vf, x, p)
 
 function get_tests_for_HHS(𝐇𝐨𝐦, J, z, xₛ, x₀, x₁, T::Ty, pars; tol = 1e-5) where Ty
     F = eigen(J)
@@ -245,13 +276,14 @@ This is the continuation method for computing an homoclinic solution to a hyperb
 Similar to [`continuation`](@ref) except that the problem is a [`HomoclinicHyperbolicProblemPBC`](@ref).
 """
 function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
-            homguess,
-            lens::BK.AllOpticTypes,
-            alg::BK.AbstractContinuationAlgorithm,
-            _contParams::ContinuationPar;
-            plot_solution = BK.plot_default,
-            kwargs...
-            )
+                        homguess,
+                        lens::BK.AllOpticTypes,
+                        alg::BK.AbstractContinuationAlgorithm,
+                        _contParams::ContinuationPar;
+                        plot_solution = BK.plot_default,
+                        kwargs...
+                        )
+    # TODO: remove this closure
     function updateHom(z, tau, step, contResult; kUP...)
         # if this is called from bisection, do not update the problem
         bisection = get(kUP, :bisection, false)
@@ -276,19 +308,19 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
         verbose && (@info "Update 𝐇𝐨𝐦" T, ϵ0, ϵ1)
 
         # compute the jacobian
-        J = ForwardDiff.jacobian(z -> getVectorField(𝐇𝐨𝐦.bvp, z, newpar ), z.u.x[2])
+        J = ForwardDiff.jacobian(z -> getVectorField(BK.get_discretization(𝐇𝐨𝐦), z, newpar ), z.u.x[2])
         (;Qs0, Qu0, nStable, nUnstable) = get_S_U_stableSpaces(J)
 
         # this is a Hack for Orthogonal collocation
-        if success && (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem) && 𝐇𝐨𝐦.bvp.meshadapt
+        if success && (BK.get_discretization(𝐇𝐨𝐦) isa Collocation) && BK.meshadapt(BK.get_discretization(𝐇𝐨𝐦))
             verbose && (@info "update mesh!")
             oldsol = BK._copy(z)
-            oldmesh = BK.get_times(𝐇𝐨𝐦.bvp) .* getperiod(𝐇𝐨𝐦.bvp, z.u, nothing)
+            oldmesh = BK.get_times(BK.get_discretization(𝐇𝐨𝐦)) .* getperiod(BK.get_discretization(𝐇𝐨𝐦), z.u, nothing)
             oldu = vcat(z.u.x[1], T)
-            adapt = BK.compute_error!(𝐇𝐨𝐦.bvp, oldu;
-                    verbosity = 𝐇𝐨𝐦.bvp.verbose_mesh_adapt,
+            adapt = BK.compute_error!(BK.get_discretization(𝐇𝐨𝐦), oldu;
+                    verbosity = BK.get_discretization(𝐇𝐨𝐦).verbose_mesh_adapt,
                     par = newpar,
-                    K = 𝐇𝐨𝐦.bvp.K)
+                    K = BK.get_discretization(𝐇𝐨𝐦).K)
             z.u.x[1] .= oldu[1:end-1]
             if ~adapt.success
                 return false
@@ -306,7 +338,7 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
             𝐇𝐨𝐦.ϵ1 = ϵ1
 
             # update section
-            BK.updatesection!(𝐇𝐨𝐦.bvp, vcat(z.u.x[1], T), newpar)
+            BK.updatesection!(BK.get_discretization(𝐇𝐨𝐦), vcat(z.u.x[1], T), newpar)
         end
 
         # call the user-passed finalizer
@@ -367,7 +399,7 @@ Perform automatic branch switching to homoclinic curve from a Bogdanov-Takens bi
 # Arguments
 - `prob::BifurcationProblem` contains the vector field
 - `bt::BK.BogdanovTakens` a Bogdanov-takens point. For example, you can get this from a call to `bt = get_normal_form(br, ind_bt)`
-- `bvp::BK.AbstractBoundaryValueProblem`, for example `PeriodicOrbitOCollProblem(50, 4)`
+- `bvp::BK.AbstractBoundaryValueDiscretization`, for example `Collocation(50, 4)`
 - `alg` continuation algorithm
 - `_contParams::ContinuationPar`
 
@@ -381,7 +413,7 @@ You can also pass the same arguments to the constructor of `::HomoclinicHyperbol
 """
 function BK.continuation(prob_vf,
             bt::BK.BogdanovTakens,
-            bvp::BK.AbstractBoundaryValueProblem,
+            bvp::BK.AbstractBoundaryValueDiscretization,
             alg::BK.AbstractContinuationAlgorithm,
             _contParams::ContinuationPar ;
             ϵ0 = 1e-5, 

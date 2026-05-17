@@ -49,7 +49,7 @@ opts_po_cont = ContinuationPar(dsmax = 0.025, ds= -0.001, dsmin = 1e-4, p_max = 
 
 br_coll = continuation(
     br, 4, opts_po_cont,
-    PeriodicOrbitOCollProblem(50, 4; meshadapt = true, update_section_every_step = 2);
+    Collocation(50, 4; meshadapt = true, update_section_every_step = 2);
     ampfactor = 1., δp = 0.001,
     # verbosity = 2,    plot = true,
     alg = PALC(tangent = Bordered()),
@@ -68,7 +68,7 @@ br_coll = continuation(
 ####################################################################################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
+    setproperties(BK.get_discretization(BK.getprob(br_coll)), meshadapt=true, K = 100),
     br_coll.sol[end].x.sol,
     BK.setparam(br_coll, br_coll.sol[end].p),
     BK.getlens(br_coll);
@@ -82,7 +82,7 @@ probhom, solh = generate_hom_problem(
     )
 
 show(probhom)
-HclinicBifurcationKit.generate_homoclinic_solution(probhom.bvp, t->ones(3), 1.)
+HclinicBifurcationKit.generate_homoclinic_solution(BK.get_discretization(probhom), t->ones(3), 1.)
 ####################################################################################################
 # same with shooting
 using OrdinaryDiffEq
@@ -96,7 +96,7 @@ opts_po_cont = ContinuationPar(dsmax = 0.15, ds= -0.0001, dsmin = 1e-4, p_max = 
 
 br_sh = continuation(
     br, 4, opts_po_cont,
-    ShootingProblem(10, probsh, Rodas5P(); parallel = false);
+    Shooting(10, probsh, Rodas5P(); parallel = false);
     ampfactor = 1.0, δp = 0.001,
     # verbosity = 2,    plot = true,
     record_from_solution = recordPO,
@@ -117,7 +117,7 @@ br_sh = continuation(
 #######################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    br_sh.prob.prob, br_sh.sol[end].x,
+    BK.get_discretization(BK.getprob(br_sh)), br_sh.sol[end].x,
     BK.setparam(br_sh, br_sh.sol[end].p),
     BK.getlens(br_sh);
     verbose = true,

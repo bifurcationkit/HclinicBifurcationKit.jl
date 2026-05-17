@@ -7,7 +7,7 @@ $$\tag{1} \frac{d x}{d t}=f(x)$$
 and we write $\phi^t(x_0)$ the associated flow (or semigroup of solutions).
 
 !!! warning "Large scale"
-    The current implementation is not yet optimised for large scale problems. This will be improved in the future.    
+    The current implementation is not yet optimized for large scale problems. This will be improved in the future.    
 
 The general method is explained in [BifurcationKit.jl](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitShooting/).
 
