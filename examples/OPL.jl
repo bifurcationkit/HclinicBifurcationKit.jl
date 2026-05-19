@@ -89,7 +89,7 @@ br_coll = continuation(
     # br, 2,
     br2, 1,
     opts_po_cont,
-    PeriodicOrbitOCollProblem(40, 4; meshadapt = true, update_section_every_step = 2);
+    Collocation(40, 4; meshadapt = true, update_section_every_step = 2);
     ampfactor = 1., δp = 0.0015,
     verbosity = 2,    plot = true,
     alg = PALC(tangent = Bordered()),
@@ -112,7 +112,7 @@ plot(_sol.t, _sol.u'; marker = :d, markersize = 1, title = "Last periodic orbit 
 ####################################################################################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
+    setproperties(BK.get_discretization(BK.getprob(br_coll)), meshadapt=true, K = 100),
     br_coll.sol[end].x.sol,
     BK.setparam(br_coll, br_coll.sol[end].p),
     BK.getlens(br_coll);
@@ -152,13 +152,10 @@ br_hom_c = continuation(
         par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
         par0 = set(par0, (@optic _.b), p.p)
         sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
-        m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
+        m = (BK.get_discretization(𝐇𝐨𝐦) isa Collocation && BK.get_discretization(𝐇𝐨𝐦).meshadapt) ? :d : :none
         plot!(sol.t, sol[:,:]',subplot=3, markersize = 1, marker=m)
     end,
     )
-
-
-br_hom_c.branch |> vscodedisplay
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
 plot!(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
@@ -180,7 +177,7 @@ br_sh = continuation(
     # br, 2,
     br2, 1,
     opts_po_cont,
-    ShootingProblem(8, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-11);
+    Shooting(8, probsh, Vern9(); parallel = true, abstol = 1e-13, reltol = 1e-11);
     ampfactor = 1., δp = 0.0015,
     verbosity = 2, plot = true,
     record_from_solution = recordPO,
@@ -204,7 +201,7 @@ plot(_sol)
 #######################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    br_sh.prob.prob, br_sh.sol[end].x,
+    BK.get_discretization(BK.getprob(br_sh)), br_sh.sol[end].x,
     BK.setparam(br_sh, br_sh.sol[end].p),
     BK.getlens(br_sh);
     verbose = true,
@@ -227,8 +224,6 @@ br_hom_sh = continuation(
             deepcopy(probhom), solh, (@optic _.b),
             # PALC(tangent = Bordered()),
             PALC(),
-            # ANM(6, 1e-8)
-            # MoorePenrose(),
             setproperties(optc_hom, max_steps = 600, dsmax = 12e-2, plot_every_step = 3, p_max = 7., detect_event = 2, a = 0.9);
     verbosity = 3, plot = true,
     callback_newton = BK.cbMaxNorm(1e0),
@@ -238,7 +233,7 @@ br_hom_sh = continuation(
         par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
         par0 = set(par0, (@optic _.b), p.p)
         sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
-        m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
+        m = (BK.get_discretization(𝐇𝐨𝐦) isa Collocation && BK.get_discretization(𝐇𝐨𝐦).meshadapt) ? :d : :none
         plot!(sol.t, sol[1:6,:]',subplot=3, markersize = 1, marker=m)
     end,
     )

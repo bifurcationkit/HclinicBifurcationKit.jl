@@ -345,24 +345,6 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
         resFinal = isnothing(finaliseUser) ? true : finaliseUser(z, tau, step, contResult; prob = 𝐇𝐨𝐦, kUP...)
     end
 
-    function testHom(iter, state)
-        z = getx(state)
-
-        T, ϵ0, ϵ1 = _changeHomParameters(𝐇𝐨𝐦, z.x[5])
-        newpar = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), z.x[end][1])
-        newpar = set(newpar, lens, getp(state))
-
-        # compute the jacobian
-        J = ForwardDiff.jacobian(z -> getVectorField(𝐇𝐨𝐦.bvp, z, newpar ), z.x[2])
-
-        u = vcat(z.x[1], T)
-        uc = BK.get_time_slices(𝐇𝐨𝐦.bvp, u)
-        x0 = @view uc[:, 1]
-        x1 = @view uc[:, end]
-
-        get_tests_for_HHS(𝐇𝐨𝐦, J, z, z.x[2], x0, x1, T, newpar) |> values
-    end
-
     probhom_bk = BifurcationProblem(𝐇𝐨𝐦, homguess, BK.getparams(𝐇𝐨𝐦), lens;
         J = (x, p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z, p), x),
         record_from_solution = (x, p; k...) -> begin
@@ -389,6 +371,27 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
         kind = HomoclinicHyperbolicSaddleCont(),
         event,
         kwargs...)
+end
+
+function testHom(iter, state)
+    z = getx(state)
+    𝐇𝐨𝐦 = BK.getprob(iter).VF.F
+    disc = BK.get_discretization(𝐇𝐨𝐦)
+    lens = BK.getlens(iter)
+
+    T, ϵ0, ϵ1 = _changeHomParameters(𝐇𝐨𝐦, z.x[5])
+    newpar = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), z.x[end][1])
+    newpar = set(newpar, lens, getp(state))
+
+    # compute the jacobian
+    J = ForwardDiff.jacobian(z -> getVectorField(disc, z, newpar ), z.x[2])
+
+    u = vcat(z.x[1], T)
+    uc = BK.get_time_slices(disc, u)
+    x0 = @view uc[:, 1]
+    x1 = @view uc[:, end]
+
+    get_tests_for_HHS(𝐇𝐨𝐦, J, z, z.x[2], x0, x1, T, newpar) |> values
 end
 ####################################################################################################
 """

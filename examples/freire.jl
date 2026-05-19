@@ -58,7 +58,7 @@ function plotHom(x,p;k...)
     par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
     par0 = set(par0, p.lens, p.p)
     sol = get_homoclinic_orbit(𝐇𝐨𝐦, x, par0)
-    m = (𝐇𝐨𝐦.bvp isa PeriodicOrbitOCollProblem && 𝐇𝐨𝐦.bvp.meshadapt) ? :d : :none
+    m = (BK.get_discretization(𝐇𝐨𝐦) isa Collocation && BK.get_discretization(𝐇𝐨𝐦).meshadapt) ? :d : :none
     plot!(sol.t, sol[1:3,:]',subplot=3, markersize = 1, marker=m)
 end
 
@@ -67,7 +67,7 @@ btpt = get_normal_form(sn_br, 2; nev = 3, autodiff = false)
 br_hom_c = continuation(
             prob,
             btpt,
-            PeriodicOrbitOCollProblem(50, 3; meshadapt = false, K = 200),
+            Collocation(50, 3; meshadapt = false, K = 200),
             PALC(tangent = Bordered()),
             ContinuationPar(opts_br, max_steps = 30, save_sol_every_step = 1, dsmax = 1e-2, plot_every_step = 1, p_min = -1.01, ds = 0.001, detect_event = 2, detect_bifurcation = 0);
     verbosity = 1, plot = false,
@@ -106,7 +106,7 @@ opts_po_cont = ContinuationPar(dsmax = 0.05, ds= 0.001, dsmin = 1e-4, p_max = 1.
 
 br_coll = continuation(
     br, 4, opts_po_cont,
-    PeriodicOrbitOCollProblem(50, 4; meshadapt = false, update_section_every_step = 2);
+    Collocation(50, 4; meshadapt = false, update_section_every_step = 2);
     ampfactor = 1., δp = 0.001,
     verbosity = 2,    plot = true,
     alg = PALC(tangent = Bordered()),
@@ -128,7 +128,7 @@ plot(_sol.t, _sol[:,:]')
 ####################################################################################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    setproperties(br_coll.prob.prob, meshadapt=true, K = 100),
+    setproperties(BK.get_discretization(BK.getprob(br_coll)), meshadapt=true, K = 100),
     br_coll.sol[end].x,
     BK.setparam(br_coll, br_coll.sol[end].p),
     BK.getlens(br_coll);
@@ -180,7 +180,7 @@ opts_po_cont = ContinuationPar(dsmax = 0.15, ds= -0.0001, dsmin = 1e-4, p_max = 
 
 br_sh = continuation(
     br, 4, opts_po_cont,
-    ShootingProblem(10, probsh, Rodas5P(); parallel = false);
+    Shooting(10, probsh, Rodas5P(); parallel = false);
     ampfactor = 1.0, δp = 0.001,
     verbosity = 2,    plot = true,
     record_from_solution = recordPO,
@@ -196,12 +196,12 @@ br_sh = continuation(
         end,
     normC = norminf)
 
-_sol = get_periodic_orbit(br_sh.prob.prob, br_sh.sol[end].x, BK.setparam(br_sh,  br_sh.sol[end].p))
+_sol = get_periodic_orbit(br_sh, 100)
 plot(_sol.t, _sol[1:3,:]')
 #######################################
 # homoclinic
 probhom, solh = generate_hom_problem(
-    br_sh.prob.prob, br_sh.sol[end].x,
+    br_sh.prob.disc, br_sh.sol[end].x,
     BK.setparam(br_sh, br_sh.sol[end].p),
     BK.getlens(br_sh);
     verbose = true,
@@ -242,7 +242,7 @@ plot(hopf_br, br_hom_c, br_hom_sh)
 br_hom_sh = continuation(
             prob,
             btpt,
-            ShootingProblem(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
+            Shooting(12, probsh, Rodas5P(); parallel = true, abstol = 1e-13, reltol = 1e-12),
             PALC(tangent = Bordered()),
             ContinuationPar(optc_hom, max_steps = 15000, save_sol_every_step = 1, ds = 1e-3, dsmax = 3e-2, plot_every_step = 50, detect_event = 2, a = 0.9, p_min = -1.01);
     verbosity = 1, plot = true,
