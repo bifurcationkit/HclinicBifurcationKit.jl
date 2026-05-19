@@ -8,9 +8,14 @@ ENV["JULIA_DEBUG"] = Documenter
 
 makedocs(doctest = false,
 	sitename = "Homoclinic / Heteroclinic orbits in Julia",
-	format = Documenter.HTML(collapselevel = 1, assets = ["assets/indigo.css"]),
-	# format = DocumenterLaTeX.LaTeX(),
 	authors = "Romain Veltz",
+	format = Documenter.HTML(
+		collapselevel = 1,
+		assets=[
+			asset("https://bifurcationkit.github.io/assets/js/documentation.js"),
+			asset("https://bifurcationkit.github.io/assets/css/documentation.css"),
+				],
+	),
 	pages = Any[
 		"Home" => "index.md",
 		"Tutorials" => "tutorials/tutorials.md",
