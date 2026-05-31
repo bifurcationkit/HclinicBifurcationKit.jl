@@ -176,7 +176,7 @@ function generate_hom_problem(coll::Collocation,
     indmax = size(xc, 2)
 
     # convert solution to homogenous mesh
-    solpo = BK.POSolution(deepcopy(coll), x)
+    solpo = BK.POInterpolation(deepcopy(coll), x)
 
     # find the saddle point as minimum of vector field norm
     xc = BK.get_time_slices(coll, x)
@@ -244,7 +244,7 @@ function generate_hom_problem(coll::Collocation,
 end
 
 function generate_hom_problem(coll::Collocation,
-                              x::BK.POSolutionAndState,
+                              x::BK.BVPSavedSolutionAndState,
                               pars,
                               lensHom::BK.AllOpticTypes;
                               k...)
