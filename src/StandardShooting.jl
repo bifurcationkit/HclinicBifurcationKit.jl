@@ -14,8 +14,8 @@ mutable struct SectionSSmax{Tn, Tc}  <: BK.AbstractSection
 end
 
 SectionSSmax(n,c) = SectionSSmax(n,c,0)
-(sect::SectionSSmax)(u, T) = BK.sectionShooting(u, T, sect.normal, sect.center)
-(sect::SectionSSmax)(u::AbstractMatrix, T) = BK.sectionShooting(u[:,sect.ind], T, sect.normal, sect.center)
+(sect::SectionSSmax)(u, T) = BK.section_shooting(u, T, sect.normal, sect.center)
+(sect::SectionSSmax)(u::AbstractMatrix, T) = BK.section_shooting(u[:,sect.ind], T, sect.normal, sect.center)
 
 # we update the field of Section, useful during continuation procedure for updating the section
 function BK.update!(sect::SectionSSmax, normal, center, ind)

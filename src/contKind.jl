@@ -1,1 +1,1 @@
-struct HomoclinicHyperbolicSaddleCont <: BK.TwoParamCont end
+struct HomoclinicHyperbolicSaddleCont <: BK.AbstractTwoParamCont end

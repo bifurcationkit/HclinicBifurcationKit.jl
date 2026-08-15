@@ -486,7 +486,7 @@ function BK.continuation(prob_vf,
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 
     printstyled("──> convergence to saddle point:\n", color = :magenta)
-    solsaddle = BK.solve(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), Newton(), NewtonPar(verbose = true), norm = BK.norminf)
+    solsaddle = BK.solve(BifurcationProblem((x,p) -> getF(𝐇𝐨𝐦,x,p), xsaddle, pars), Newton(), NewtonPar(verbose = true, tol = 1e-10), norm = BK.norminf)
     if BK.converged(solsaddle)
         xsaddle .= solsaddle.u
     end
