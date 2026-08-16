@@ -1,11 +1,11 @@
 # Homoclinic based on orthogonal collocation
 
-We compute `Ntst` time slices of a periodic orbit using orthogonal collocation. This is implemented in the structure `BifurcationKit.Collocation`.
+We compute homoclinic orbits by discretizing the Cauchy problem on `Ntst` time intervals with orthogonal collocation, as implemented in the structure `BifurcationKit.Collocation`.
 
 !!! warning "Large scale"
-    The current implementation is not yet optimized for large scale problems. This will be improved in the future.    
+    The current implementation is not yet optimized for large scale problems. This will be improved in the future.
 
-The general method is explained in [BifurcationKit.jl](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitCollocation/).
+The general method is explained in the [periodic orbit collocation](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitCollocation/) section of the BifurcationKit.jl documentation.
 
 ## General method
 
@@ -25,7 +25,25 @@ $$\left\{\begin{aligned}
 
 ## Mesh adaptation
 
-The goal of this functionality is to adapt the mesh in order to minimize the error.
+The goal of this functionality is to adapt the mesh in order to minimize the discretization error. It is activated with `meshadapt = true` when constructing a `BifurcationKit.Collocation`; the number of allowed adaptation steps is controlled by the parameter `K` of the collocation.
+
+When mesh adaptation is used, the solutions stored on a branch are `BifurcationKit.POSavedSolutionAndState` which record the mesh and the phase condition. [`generate_hom_problem`](@ref) accepts such a solution directly, so that the adapted mesh and phase are properly restored before building the homoclinic problem.
+
+## Usage
+
+A typical workflow is to
+
+1. compute a branch of periodic orbits with `BifurcationKit` using a `Collocation` discretization,
+2. build the homoclinic problem from the last point of the branch with [`generate_hom_problem`](@ref),
+3. continue the homoclinic orbit with [`continuation`](@ref):
+
+```julia
+# coll is a Collocation discretization, brpo a branch of periodic orbits
+𝐇𝐨𝐦, xhom, pars, _ = generate_hom_problem(coll, brpo.sol[end].x, BK.setparam(brpo, brpo.sol[end].p), BK.getlens(brpo))
+br_hom = continuation(𝐇𝐨𝐦, xhom, lens, PALC(), ContinuationPar(); kwargs...)
+```
+
+See the [tutorials](@ref tutorials-page) for fully worked examples.
 
 ## Jacobian
 

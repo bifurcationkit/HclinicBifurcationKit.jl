@@ -10,10 +10,15 @@
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://bifurcationkit.github.io/HclinicBifurcationKit.jl/dev
 
+`HclinicBifurcationKit.jl` is a component package in the `BifurcationKit` ecosystem. It provides the utilities to compute homoclinic (heteroclinic) orbits of ODEs and to perform their numerical bifurcation analysis.
 
-`HclinicBifurcationKit.jl` is a component package in the `BifurcationKit` ecosystem. It holds the utilities concerning the computations of homoclinic (heteroclinic) orbits. While completely independent
-and usable on its own, users interested in using this
-functionality should check out [BifurcationKit.jl](https://github.com/bifurcationkit/BifurcationKit.jl).
+While completely independent and usable on its own, users interested in this functionality are encouraged to also check out [BifurcationKit.jl](https://github.com/bifurcationkit/BifurcationKit.jl).
+
+## Features
+
+- computation of Homoclinic to Hyperbolic Saddle Orbits (HomHS) using orthogonal collocation or (multiple) shooting
+- bifurcation analysis of HomHS, including detection of codimension-two bifurcations
+- automatic branch switching to HomHS from a Bogdanov–Takens point
 
 ## 📦 Installation
 

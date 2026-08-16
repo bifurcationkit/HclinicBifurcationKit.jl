@@ -1,19 +1,19 @@
 # Homoclinic based on parallel multiple shooting
 
-We aim at finding homoclinic orbits for the Cauchy problem 
+We aim at finding homoclinic orbits for the Cauchy problem
 
-$$\tag{1} \frac{d x}{d t}=f(x)$$ 
+$$\tag{1} \frac{d x}{d t}=f(x)$$
 
 and we write $\phi^t(x_0)$ the associated flow (or semigroup of solutions).
 
 !!! warning "Large scale"
-    The current implementation is not yet optimized for large scale problems. This will be improved in the future.    
+    The current implementation is not yet optimized for large scale problems. This will be improved in the future.
 
-The general method is explained in [BifurcationKit.jl](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitShooting/).
+The general method is explained in the [periodic orbit shooting](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/periodicOrbitShooting/) section of the BifurcationKit.jl documentation.
 
 ## General method
 
-It amounts to solving a boundary value problem. See [^DeWitte] for description of the equations on the projectors.
+It amounts to solving a boundary value problem. See [^DeWitte] for a description of the equations on the projectors.
 
 $$\left\{\begin{aligned}
 & \dot{u}(t)-2 T\cdot F(u(t), p)=0 \\
@@ -26,6 +26,22 @@ $$\left\{\begin{aligned}
 & \left\|u(1)-u_0\right\|-\epsilon_1=0 \\
 & \int_0^1 \tilde{u}^*(t)[u(t)-\tilde{u}(t)] d t=0, \\
 \end{aligned}\right.$$
+
+## Usage
+
+A typical workflow is to
+
+1. compute a branch of periodic orbits with `BifurcationKit` using a `Shooting` discretization,
+2. build the homoclinic problem from the last point of the branch with [`generate_hom_problem`](@ref),
+3. continue the homoclinic orbit with [`continuation`](@ref):
+
+```julia
+# sh is a Shooting discretization, brpo a branch of periodic orbits
+𝐇𝐨𝐦, xhom, pars, _ = generate_hom_problem(sh, brpo.sol[end].x, BK.setparam(brpo, brpo.sol[end].p), BK.getlens(brpo))
+br_hom = continuation(𝐇𝐨𝐦, xhom, lens, PALC(), ContinuationPar(); kwargs...)
+```
+
+See the [tutorials](@ref tutorials-page) for fully worked examples.
 
 ## Jacobian
 

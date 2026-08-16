@@ -1,48 +1,61 @@
 """
-Computation of homoclinic orbit to an hyperbolic saddle based on the projection boundary condition (PBC) method.
-$(SIGNATURES)
+$(TYPEDEF)
+
+Structure to encode the computation of a homoclinic orbit to a hyperbolic saddle based on the projection boundary condition (PBC) method.
+
+# Constructor
+It is most conveniently created from a periodic orbit with [`generate_hom_problem`](@ref), or by branch switching from a Bogdanov–Takens point with [`continuation`](@ref). It can also be built directly as
+
+    HomoclinicHyperbolicProblemPBC(disc, lens, N, J; ϵ0 = ..., ϵ1 = ..., T = ..., ...)
+
+where `disc` is the discretization of the boundary value problem (`Collocation` or `Shooting`), `lens` the parameter axis used for the continuation, `N` the dimension of the phase space and `J` the jacobian of the vector field at the saddle point.
 
 # Internal fields
 $(TYPEDFIELDS)
 """
 mutable struct HomoclinicHyperbolicProblemPBC{Tdisc, Nfree, Tlens, Ty, Tlensfree, Tq, Tt} <: BK.AbstractBoundaryValueProblem
-    "Sructure encoding the discretization of the boundary value problem. For example, you can pass a `Trapeze`, a `Collocation` or an `AbstractShootingProblem`."
+    "Discretization of the boundary value problem: `Collocation` or `Shooting`."
     disc::Tdisc
 
-    "Two lenses which are used to define 2 free parameters."
+    "Lens (parameter axis) of the free parameter stored in the state, used to evaluate the vector field."
     lens::Tlens
 
-    "Return time T"
+    "Return time `T` of the homoclinic orbit."
     T::Ty
 
-    "Precision of how far the section is from the homoclinic point."
+    "Desired distance of the point `x₀` (departure from the saddle) to the saddle point."
     ϵ0::Ty
 
-    "Precision of how far the section is from the homoclinic point."
+    "Desired distance of the point `x₁` (return to the saddle) to the saddle point."
     ϵ1::Ty
 
-    "Free parameters"
+    "Lenses (parameter axes) of the free homoclinic parameters (typically `T` and `ϵ0`)."
     freelens::Tlensfree
 
-    "Orthonormal Projector on the unstable subspace orthogonal."
+    "Orthonormal projector associated with the unstable subspace."
     Qu0::Tq # size = n x ns
 
-    "Orthonormal Projector on the stable subspace orthogonal."
+    "Orthonormal projector associated with the stable subspace."
     Qs0::Tq # size = n x nu
 
-    "Dimension of phase space"
+    "Dimension of the phase space."
     N::Int64
 
-    "updates the section every `update_section_every_step` step during continuation."
+    "Frequency (in number of continuation steps) at which the projectors and free parameters are updated."
     updateEveryStep::Int
 
     "How the jacobian of the problem is computed."
     jacobian::Symbol
 
+    "NamedTuple with the test functions used to detect codimension-two bifurcations of the homoclinic orbit (e.g. `NNS`, `NSF`, `DRS`, `BT`, ...)."
     test::Tt
+    "Whether to compute the test functions for orbit flips."
     testOrbitFlip::Bool
+    "Whether to compute the test functions for inclination flips."
     testInclinationFlip::Bool
+    "Number of unstable eigenvalues of the jacobian at the saddle."
     nUnstable::Int64
+    "Number of stable eigenvalues of the jacobian at the saddle."
     nStable::Int64
 end
 @inline BK.getparams(pb::HomoclinicHyperbolicProblemPBC) = BK.getparams(BK.get_discretization(pb))
@@ -269,11 +282,17 @@ end
 """
 $(SIGNATURES)
 
-This is the continuation method for computing an homoclinic solution to a hyperbolic saddle. The parameter lens is the one from `prob_vf::BifurcationProblem`.
+Perform continuation of a homoclinic orbit to a hyperbolic saddle, based on the projection boundary condition (PBC) method. The functional `𝐇𝐨𝐦` and the initial guess `homguess` are for example obtained from a periodic orbit with [`generate_hom_problem`](@ref) or from branch switching at a Bogdanov–Takens point with [`continuation`](@ref).
 
 # Arguments
 
-Similar to [`continuation`](@ref) except that the problem is a [`HomoclinicHyperbolicProblemPBC`](@ref).
+- `𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC`: the functional encoding the homoclinic boundary value problem.
+- `homguess`: the initial guess, as returned together with `𝐇𝐨𝐦`.
+- `lens::BK.AllOpticTypes`: the parameter (lens) used as continuation parameter.
+- `alg::BK.AbstractContinuationAlgorithm`: the continuation algorithm, see [`continuation`](@ref).
+- `_contParams::ContinuationPar`: the parameters of the continuation.
+
+The additional `kwargs` are the ones of `BifurcationKit.continuation`.
 """
 function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
                         homguess,
@@ -345,21 +364,22 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
         resFinal = isnothing(finaliseUser) ? true : finaliseUser(z, tau, step, contResult; prob = 𝐇𝐨𝐦, kUP...)
     end
 
+
     probhom_bk = BifurcationProblem(𝐇𝐨𝐦, homguess, BK.getparams(𝐇𝐨𝐦), lens;
         J = (x, p) -> ForwardDiff.jacobian(z -> 𝐇𝐨𝐦(z, p), x),
         record_from_solution = (x, p; k...) -> begin
-            if length(𝐇𝐨𝐦.freelens) == 1
-                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @optic _.FreeP1))
-            else
-                lensS = map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, (@optic _.FreeP1), @optic _.FreeP2))
-            end
+            lensS = if length(𝐇𝐨𝐦.freelens) == 1
+                    map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, @optic _.FreeP1))
+                else
+                    map(BK.get_lens_symbol, (BK.getlens(𝐇𝐨𝐦), lens, (@optic _.FreeP1), @optic _.FreeP2))
+                end
             record = (;zip(lensS, (x.x[end][1], p, x.x[end][2:end]...))...)
             if _contParams.detect_event > 0
                 record = merge(record, 𝐇𝐨𝐦.test)
             end
             return record
         end,
-        plot_solution = modify_hom_plot(𝐇𝐨𝐦, lens, (kwargs..., plot_solution = plot_solution)),
+        plot_solution = modify_hom_plot(BK.get_plot_backend(), 𝐇𝐨𝐦, BK.getparams(𝐇𝐨𝐦), lens; kwargs..., plot_solution = plot_solution),
         )
 
     event = ContinuousEvent(16, testHom, false, ("NNS", "NSF", "NFF", "DRS", "DRU", "NDS", "NDU", "TLS", "TLU", "NCH", "SH", "BT", "OFU", "OFS", "IFU", "IFS"), 0)
@@ -397,22 +417,29 @@ end
 """
 $(SIGNATURES)
 
-Perform automatic branch switching to homoclinic curve from a Bogdanov-Takens bifurcation point. It uses the homoclinic orbit predictor from the Bogdanov-Takens normal form.
+Perform automatic branch switching to a homoclinic curve from a Bogdanov–Takens bifurcation point. It uses the homoclinic orbit predictor from the Bogdanov–Takens normal form.
 
 # Arguments
 - `prob::BifurcationProblem` contains the vector field
-- `bt::BK.BogdanovTakens` a Bogdanov-takens point. For example, you can get this from a call to `bt = get_normal_form(br, ind_bt)`
+- `bt::BK.BogdanovTakens` a Bogdanov–Takens point. For example, you can get this from a call to `bt = get_normal_form(br, ind_bt)`
 - `bvp::BK.AbstractBoundaryValueDiscretization`, for example `Collocation(50, 4)`
 - `alg` continuation algorithm
 - `_contParams::ContinuationPar`
 
 ## Optional arguments
-- `ϵ0 = 1e-5` distance of the homolinic orbit from the saddle point
+- `ϵ0 = 1e-5` distance of the homoclinic orbit from the saddle point
 - `amplitude = 1e-3` amplitude of the homoclinic orbit
-- `maxT = Inf` limit on the "period" of the homoclinic cycle.
+- `freeparams = ((@optic _.ϵ0), (@optic _.T))` free parameters used to define the homoclinic orbit in parameter space
+- `maxT = Inf` limit on the "period" of the homoclinic cycle
+- `update_every_step = 1` frequency at which the homoclinic problem is updated during the continuation
+- `test_orbit_flip = false` set to `true` to detect orbit flips
+- `test_inclination_flip = false` set to `true` to detect inclination flips
 
 You can also pass the same arguments to the constructor of `::HomoclinicHyperbolicProblemPBC` and those to `continuation` from BifurcationKit.
 - `kwargs` arguments passed to `continuation`
+
+## Output
+- returns a branch of homoclinic orbits together with the Bogdanov–Takens point `bt`.
 """
 function BK.continuation(prob_vf,
             bt::BK.BogdanovTakens,
@@ -426,6 +453,7 @@ function BK.continuation(prob_vf,
             update_every_step = 1,
             test_orbit_flip = false,
             test_inclination_flip = false,
+            normC = norm,
             kwargs...
             )
     printstyled(color=:magenta, "\n\n────────────────────────────\n┌─ Start Hom_BT init\n")
@@ -447,8 +475,8 @@ function BK.continuation(prob_vf,
     printstyled(color = :magenta,"├───  ζ = ", ζ, "\n")
     T0 = 2/exp(ζ)
     f(t) = sech(ϵ * t) - ζ
-    pb = BifurcationProblem((t,p) -> [f(t[1])], [T0/ϵ], nothing)
-    solT = BK.solve(pb, Newton(), NewtonPar(tol = 1e-8, verbose = false))
+    pb = BK.BifurcationProblem((t,p) -> [f(t[1])], [T0/ϵ], nothing)
+    solT = BK.solve(pb, Newton(), NewtonPar(tol = 1e-8, verbose = false), normN = normC)
     @assert BK.converged(solT) "Newton iteration failed in determining the half return time T"
     T = min(solT.u[1], maxT)
     printstyled(color = :magenta,"├─ T = ", T, "\n")
@@ -501,6 +529,6 @@ function BK.continuation(prob_vf,
         [p1, map(x -> BK._get(𝐇𝐨𝐦, x), freeparams)...]
         )
 
-    br = BK.continuation(𝐇𝐨𝐦, xhom, lens2, alg, _contParams; kwargs...)
+    br = BK.continuation(𝐇𝐨𝐦, xhom, lens2, alg, _contParams; normC, kwargs...)
     return Branch(br, bt)
 end

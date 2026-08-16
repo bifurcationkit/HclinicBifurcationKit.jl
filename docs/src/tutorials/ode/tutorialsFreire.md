@@ -13,7 +13,7 @@ $$\left\{\begin{aligned}
 & \dot{z}=y
 \end{aligned}\right.$$
 
-This is an example of computing the curve of homoclinics from a Bogdanov-Takens bifurcation point. 
+This is an example of computing the curve of homoclinics from a Bogdanov-Takens bifurcation point.
 It is easy to encode the ODE as follows
 
 ```@example TUTFREIRE
@@ -35,7 +35,6 @@ function freire!(dz, u, p, t = 0)
 end
 
 par_freire = (ν = -0.75, β = -0.1, A₃ = 0.328578, B₃ = 0.933578, r = 0.6, ϵ = 0.01)
-z0 = [0.7,0.3,0.1]
 z0 = zeros(3)
 prob = BK.BifurcationProblem(freire!, z0, par_freire, (@optic _.β); record_from_solution = recordFromSolution)
 
@@ -82,6 +81,8 @@ plot(sn_br, hopf_br, ylims = (-0.1, 1.25))
 
 ## Branch of homoclinic orbits with Orthogonal Collocation
 
+We now continue the branch of homoclinic orbits starting from the Bogdanov–Takens point. We first define a plotting function for the homoclinic orbits:
+
 Plotting function:
 
 ```@example TUTFREIRE
@@ -122,6 +123,8 @@ plot!(br_hom_c, branchlabel = "Hom")
 ```
 
 ## Branch of homoclinic orbits with Multiple Shooting
+
+We compute the same branch of homoclinic orbits, but this time with a multiple shooting discretization:
 
 ```@example TUTFREIRE
 using OrdinaryDiffEq

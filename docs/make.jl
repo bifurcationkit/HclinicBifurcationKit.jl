@@ -30,7 +30,7 @@ makedocs(doctest = false,
 			"Bifurcations" => [
 				"Bifurcation detection (codim 1)" => "detectionBifurcation.md",
 				"Branch switching" => "branchswitching.md",
-							  ],		
+							  ],
 		],
 		"Frequently Asked Questions" => "faq.md",
 		"Library" => "library.md"

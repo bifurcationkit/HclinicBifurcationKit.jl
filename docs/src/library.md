@@ -27,7 +27,7 @@ BifurcationKit.continuation(prob_vf,
 			alg::BifurcationKit.AbstractContinuationAlgorithm,
 			_contParams::ContinuationPar ;
 			ϵ0 = 1e-5, amplitude = 1e-3,
-			freeparams = ((@lens _.ϵ0), (@lens _.T)),
+			freeparams = ((@optic _.ϵ0), (@optic _.T)),
 			maxT = Inf,
 			update_every_step = 1,
 			test_orbit_flip = false,
@@ -36,7 +36,7 @@ BifurcationKit.continuation(prob_vf,
 			)
 ```
 
-## Utils 
+## Utils
 
 ```@docs
 generate_hom_problem

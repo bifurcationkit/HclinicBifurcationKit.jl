@@ -164,21 +164,25 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Generate a homoclinic to hyperbolic saddle problem from a periodic solution obtained with problem `pb`.
+Generate a [`HomoclinicHyperbolicProblemPBC`](@ref) functional together with an initial guess, from a periodic orbit computed with the shooting method `sh`. The periodic orbit is used to locate the saddle point (point of minimal norm of the vector field) and the points `x₀`, `x₁` close to the unstable/stable manifolds of the saddle.
 
 ## Arguments
-- `sh` a `Shooting` which provide basic information, like the number of time slices `M`
-- `x::AbstractArray` initial guess
-- `pars` parameters
-- `lensHom::BK.AllOpticTypes` parameter axis for continuation
-- `ϵ0, ϵ1`: specify the distance to the saddle point of x₀, x₁
-- `t0, t1`: specify the time corresponding to x₀, x₁. Overwrite the part with `ϵ0, ϵ1` if set.
+- `sh::Shooting`: shooting discretization used to compute the periodic orbit (also provides the number of time slices `M`)
+- `x::AbstractArray`: periodic orbit solution, as stored on a branch (e.g. `br.sol[end].x`)
+- `pars`: parameters at which the periodic orbit was computed
+- `lensHom::BK.AllOpticTypes`: parameter axis (lens) used for the continuation of the homoclinic orbit
 
-## Optional arguments
-You can pass the same arguments to the constructor of `::HomoclinicHyperbolicProblemPBC`.
+## Keyword arguments
+- `ϵ0 = 1e-5`, `ϵ1 = 1e-5`: distances of `x₀`, `x₁` to the saddle point
+- `t0 = 0`, `t1 = 0`: times in the periodic orbit corresponding to `x₀`, `x₁`. If both are `0`, they are detected automatically, otherwise they overwrite `ϵ0, ϵ1`
+- `maxT = Inf`: upper bound on the return time `T` of the homoclinic orbit
+- `freeparams = ((@optic _.ϵ0), (@optic _.T))`: free parameters used to define the homoclinic orbit in parameter space
+- `verbose = false`: print some debugging information
+
+The extra `kwargs` are passed to the constructor of `::HomoclinicHyperbolicProblemPBC`.
 
 ## Output
-- returns a `HomoclinicHyperbolicProblemPBC` and an initial guess.
+- returns the tuple `(𝐇𝐨𝐦, xhom, pars, xhom)` where `𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC` and `xhom` is the initial guess. In the tutorials, only the first two entries are used.
 """
 function generate_hom_problem(sh::Shooting,
                             x::AbstractArray,

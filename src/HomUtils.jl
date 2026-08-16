@@ -1,7 +1,12 @@
 # change for Makie
-function modify_hom_plot(probPO, lens, kwargs)
+function modify_hom_plot(::Union{BK.BK_NoPlot, BK.BK_Plots}, probHom, pars, lens; kwargs...)
     _plotsol = get(kwargs, :plot_solution, nothing)
-    _plotsol2 = isnothing(_plotsol) ? (x, p; k...) -> nothing : (x, p; k...) -> _plotsol(x, (prob = probPO, lens = lens, p = p); k...)
+    _plotsol2 = isnothing(_plotsol) ? BK.plot_default : (x, p; k...) -> _plotsol(x, (prob = probHom, lens = lens, p = p); k...)
+end
+
+function modify_hom_plot(::BK.BK_Makie, probHom, pars, lens; kwargs...)
+    _plotsol = get(kwargs, :plot_solution, nothing)
+    _plotsol2 = isnothing(_plotsol) ? BK.plot_default : (ax, x, p; k...) -> _plotsol(ax, x, (prob = probHom, lens = lens, p = p); k...)
 end
 
 # function to extract trajectories from branch

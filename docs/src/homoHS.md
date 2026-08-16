@@ -4,13 +4,13 @@ Consider the ODE problem written
 
 $$\frac{du}{dt}=F(u(t),p)\tag{E}$$
 
-where $p$ are parameters. 
+where $p$ denotes the parameters.
 A homoclinic solution $u^*$ to a hyperbolic saddle $u^s(p)$ satisfies $\lim\limits_{t\to\pm\infty}u^*(t) = u^s$ and $u^*(p)$ is a hyperbolic saddle of (E).
 
-We provide 2 methods for computing such homoclinic orbits
+We provide 2 methods for computing such homoclinic orbits:
 
-2. one (Collocation) based on orthogonal collocation to discretize the above problem (E), with adaptive mesh 
-3. one (Shooting) based on parallel standard shooting
+1. [Homoclinic based on orthogonal collocation](@ref): orthogonal collocation to discretize the above problem (E), with adaptive mesh,
+2. [Homoclinic based on parallel multiple shooting](@ref): standard shooting based on the flow of (E).
 
 ## General method
 
@@ -25,45 +25,20 @@ $$\left\{\begin{aligned}
 & \left\|u(1)-u^s\right\|-\epsilon_1=0 \\
 \end{aligned}\right.$$
 
-Basically, we truncate the homoclinic orbit on $[-T,T]$ and we impose that $u(-T),u(T)$ is close to $u^s$ and belong to the stable / unstable subspaces of $u^s$.
-There are thus at most 3 free parameters and $T,\epsilon_0,\epsilon_1$ and the user can **either**
+Basically, we truncate the homoclinic orbit on $[-T,T]$ and we impose that $u(-T)$ and $u(T)$ are close to $u^s$ and belong to the stable / unstable subspaces of $u^s$.
 
-- chose one as a free parameter, for example $T$
-- chose two as free parameters, for example $T,\epsilon_1$
+The homoclinic solution is thus parametrized by the three scalars $T$, $\epsilon_0$ and $\epsilon_1$. Besides the continuation parameter, the user must select the free parameters of the problem (keyword `freeparams` in [`HomoclinicHyperbolicProblemPBC`](@ref)); at most two of $T, \epsilon_0, \epsilon_1$ can be free, e.g.
 
-
+- one free parameter, for example $T$,
+- two free parameters, for example $T,\epsilon_1$.
 
 ## Continuation
 
-Please see the tutorials for examples. In a nutshell, you can compute homoclinic orbits by setting up a [`HomoclinicHyperbolicProblemPBC`](@ref) or by branching from a Bogdanov-Takens point.
+The homoclinic problem can be set up with [`generate_hom_problem`](@ref) (from a periodic orbit) or by branch switching from a Bogdanov–Takens point with [`continuation`](@ref); see the [tutorials](@ref tutorials-page) for examples.
 
-## Detection of codim 2 bifurcation points
+## Detection of codimension 2 bifurcation points
 
-You can detect the following codim 2 bifurcation points by using the option `detect_codim2_bifurcation` in the method `continuation`. Under the hood, the detection of these bifurcations is done by using Event detection as explained in [Event Handling](https://bifurcationkit.github.io/BifurcationKitDocs.jl/dev/EventCallback/).
-
-We refer to [^DeWitte] for a description of the bifurcations.
-
-
-Type of bifurcation | Label
--------|-------------------
- Limit cycle |  LC 
- Homoclinic to Hyperbolic Saddle |  HHS 
- Homoclinic to Saddle-Node |  HSN 
- Neutral saddle |  NSS 
- Neutral saddle-focus |  NSF 
- Neutral Bi-Focus |  NFF 
- Shilnikov-Hopf |  SH 
- Double Real Stable leading eigenvalue |  DRS 
- Double Real Unstable leading eigenvalue |  DRU 
- Neutrally-Divergent saddle-focus (Stable) |  NDS 
- Neutrally-Divergent saddle-focus (Unstable) |  NDU 
- Three Leading eigenvalues (Stable) |  TLS 
- Three Leading eigenvalues (Unstable) |  TLU 
- Orbit-Flip with respect to the Stable manifold |  OFS 
- Orbit-Flip with respect to the Unstable manifold |  OFU 
- Non-Central Homoclinic to saddle-node |  NCH 
-
-> Inclination-Flip with respect to the Stable / Unstable manifold is not yet detected.
+Codimension-two bifurcation points along the homoclinic branch can be detected during the continuation. We refer to the page [Detection of bifurcation points](@ref) for the list of detected bifurcations and how to enable them.
 
 ## References
 

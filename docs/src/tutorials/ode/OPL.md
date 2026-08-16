@@ -91,6 +91,7 @@ ylims!(0,1.5)
 
 ## Branch of homoclinic orbits with Orthogonal Collocation
 
+We first continue the branch of periodic orbits from `br2` up to a large period, using orthogonal collocation with mesh adaptation:
 
 ```@example TUTOPL
 # plotting function
@@ -131,10 +132,9 @@ br_coll = continuation(
 	finalise_solution = (z, tau, step, contResult; prob = nothing, kwargs...) -> begin
 		# limit the period
 			return z.u[end] < 150
-			true
 		end,
 	normC = norminf)
-	
+
 _sol = get_periodic_orbit(br_coll, length(br_coll))
 plot(_sol.t, _sol.u'; marker = :d, markersize = 1,title = "Last periodic orbit on branch")
 ```
@@ -193,6 +193,8 @@ ylims!(0.1,1.5)
 
 ## Branch of homoclinic orbits with Multiple Shooting
 
+We compute the same branch of homoclinic orbits, but this time with a multiple shooting discretization:
+
 ```@example TUTOPL
 using OrdinaryDiffEq
 probsh = ODEProblem(OPL!, copy(z0), (0., 1.), par_OPL; abstol = 1e-12, reltol = 1e-10)
@@ -217,7 +219,6 @@ br_sh = continuation(
 	finalise_solution = (z, tau, step, contResult; prob = nothing, kwargs...) -> begin
 		# limit the period
 			return z.u[end] < 100
-			true
 		end,
 	normC = norminf)
 
@@ -228,7 +229,7 @@ plot(_sol.t, _sol[1:3,:]')
 ```@example TUTOPL
 # homoclinic
 probhom, solh = generate_hom_problem(
-	BK.get_discretization(BK.getprob(br_sh)), 
+	BK.get_discretization(BK.getprob(br_sh)),
 	br_sh.sol[end].x,
 	BK.setparam(br_sh, br_sh.sol[end].p),
 	BK.getlens(br_sh);

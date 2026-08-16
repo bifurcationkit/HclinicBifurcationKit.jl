@@ -1,5 +1,15 @@
 getF(hom::HomoclinicHyperbolicProblemPBC{Tdisc}, x, p) where {Tdisc <: Collocation} = BK.residual(BK.get_discretization(hom).prob_vf, x, p)
 
+"""
+$(TYPEDSIGNATURES)
+
+Reconstruct the homoclinic orbit from a solution `x` of the homoclinic problem `hom`, for example a point stored on a branch of homoclinic orbits (`br.sol[ind].x`). `par` are the parameters at which the solution was computed (e.g. `BK.setparam(br, br.sol[ind].p)`).
+
+The extra `kwargs` (e.g. `saveat`) are forwarded to the ODE solver used to integrate the orbit.
+
+# Output
+Returns the homoclinic orbit as a time solution with fields `t` (time mesh) and `u` (states), which can be plotted or interpolated in time.
+"""
 get_homoclinic_orbit(hom::HomoclinicHyperbolicProblemPBC{Tdisc}, x::ArrayPartition, par; k...) where {Tdisc <: Collocation} = get_periodic_orbit(BK.get_discretization(hom), vcat(x.x[1], hom.T), par)
 
 function generate_hom_solution(pb::Collocation, orbit0, T)
@@ -139,24 +149,28 @@ using SciMLBase: AbstractTimeseriesSolution
 """
 $(TYPEDSIGNATURES)
 
-Generate a homoclinic to hyperbolic saddle problem from a periodic solution obtained with problem `pb`.
+Generate a [`HomoclinicHyperbolicProblemPBC`](@ref) functional together with an initial guess, from a periodic orbit computed with the collocation method `coll`. The periodic orbit is used to locate the saddle point (point of minimal norm of the residual) and the points `x₀`, `x₁` close to the unstable/stable manifolds of the saddle.
 
 !!! tip "Adapted mesh"
-    In case of an adapted mesh, you can pass the `POSolutionAndState` directly in place of `x`.
+    In case of an adapted mesh, you can pass the `BK.POSavedSolutionAndState` solution directly in place of `x`, see the dedicated method below.
 
 ## Arguments
-- `coll` a `Collocation` which provide basic information, like the number of time slices `M`
-- `x::AbstractArray` initial guess
-- `pars` parameters
-- `lensHom` parameter axis for continuation
-- `ϵ0, ϵ1`: specify the distance to the saddle point of x₀, x₁
-- `t0, t1`: specify the time corresponding to x₀, x₁. Overwrite the part with `ϵ0, ϵ1` if set.
+- `coll::Collocation`: collocation discretization used to compute the periodic orbit
+- `x::AbstractArray`: periodic orbit solution, as stored on a branch (e.g. `br.sol[end].x`)
+- `pars`: parameters at which the periodic orbit was computed
+- `lensHom::BK.AllOpticTypes`: parameter axis (lens) used for the continuation of the homoclinic orbit
 
-## Optional arguments
-You can pass the same arguments to the constructor of `::HomoclinicHyperbolicProblemPBC`.
+## Keyword arguments
+- `ϵ0 = 1e-5`, `ϵ1 = 1e-5`: distances of `x₀`, `x₁` to the saddle point
+- `t0 = 0`, `t1 = 0`: times in the periodic orbit corresponding to `x₀`, `x₁`. If both are `0`, they are detected automatically on a dense scan of the orbit, otherwise they overwrite `ϵ0, ϵ1`
+- `maxT = Inf`: upper bound on the return time `T` of the homoclinic orbit
+- `freeparams = ((@optic _.ϵ0), (@optic _.T))`: free parameters used to define the homoclinic orbit in parameter space
+- `verbose = false`: print some debugging information
+
+The extra `kwargs` are passed to the constructor of `::HomoclinicHyperbolicProblemPBC`.
 
 ## Output
-- returns a `HomoclinicHyperbolicProblemPBC` and an initial guess.
+- returns the tuple `(𝐇𝐨𝐦, xhom, pars, xhom)` where `𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC` and `xhom` is the initial guess. In the tutorials, only the first two entries are used.
 """
 function generate_hom_problem(coll::Collocation,
                               x::AbstractArray,
@@ -217,7 +231,15 @@ function generate_hom_problem(coll::Collocation,
 
     # define problem for Homoclinic functional
     J = BK.jacobian(coll.prob_vf, xsaddle, pars)
-    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp, lensHom, length(xsaddle), copy(J);  ϵ0 = ϵ0hom, ϵ1 = ϵ1hom, T = Thom, freeparams = freeparams, kw...)
+    𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp,
+                                          lensHom,
+                                          length(xsaddle),
+                                          copy(J);
+                                          ϵ0 = ϵ0hom,
+                                          ϵ1 = ϵ1hom,
+                                          T = Thom,
+                                          freeparams = freeparams,
+                                          kw...)
 
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 
@@ -237,19 +259,22 @@ function generate_hom_problem(coll::Collocation,
         xsaddle,
         zeros(eltype(xsaddle), n - ns, ns),
         zeros(eltype(xsaddle), n - nu, nu),
-        [p1, map(x -> BK._get(𝐇𝐨𝐦,x), freeparams)...]
+        [p1, map(x -> BK._get(𝐇𝐨𝐦, x), freeparams)...]
         )
 
     return 𝐇𝐨𝐦, xhom, pars, xhom
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Same as [`generate_hom_problem`](@ref) but `x` is a `BK.POSavedSolutionAndState`, as returned on the branch when mesh adaptation is used. The mesh `x._mesh` on which the solution `x.sol` is defined is restored in a working copy of `coll` and the section is updated with the phase `x.ϕ` before generating the homoclinic problem. The keyword arguments are the same as for the `AbstractArray` method.
+"""
 function generate_hom_problem(coll::Collocation,
-                              x::BK.BVPSavedSolutionAndState,
+                              x::BK.POSavedSolutionAndState,
                               pars,
                               lensHom::BK.AllOpticTypes;
                               k...)
-    @error "here"
-    n, m, _ = size(coll)
     coll2 = deepcopy(coll)
     BK.update_mesh!(coll2, x._mesh)
     generate_hom_problem(coll2, x.sol, pars, lensHom; k...)
