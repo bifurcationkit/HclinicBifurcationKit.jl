@@ -147,12 +147,99 @@ end
 using SciMLBase: AbstractTimeseriesSolution
 
 """
+    _select_homoclinic_arc(τs, ft, m, Ntst, isaddle, t0, t1, T)
+
+Select, on the stored points of a periodic-orbit solution (no interpolation), the
+contiguous block of whole collocation intervals used as an initial guess for the truncated
+homoclinic orbit.
+
+- `τs`: interval boundaries (length `Ntst + 1`)
+- `ft`: node fractions of the periodic orbit (length `1 + m * Ntst`)
+- `isaddle`: index of the node closest to the saddle point
+
+If `t0 == t1 == 0`, the single interval containing the closest node is removed.
+Otherwise the whole intervals covering the window `[t0, t1]` are kept.
+
+Return a NamedTuple with:
+- `kept`: indices (in `1:Ntst`) of the intervals kept along the arc,
+- `uidx`: indices of the kept time slices, in arc order,
+- `ulifts`: unwrapped fractions of these points,
+- `widths`: widths of the kept intervals,
+- `a0`: physical fraction of the arc start (a boundary),
+- `L`: arc length, as a fraction of the period.
+"""
+function _select_homoclinic_arc(τs, ft, m, Ntst, isaddle, t0, t1, T)
+    # ━━━━━━ choose the contiguous block of whole intervals ━━━━━━
+    if t1 == t0 == 0
+        # remove the interval containing the closest node
+        if Ntst == 1
+            g = 1
+            kept = [1]
+        else
+            jrem = isaddle == 1 ? 1 : max(1, cld(isaddle - 1, m))
+            g = mod1(jrem + 1, Ntst)                    # first interval after the removed one
+            kept = [mod1(jrem + kk, Ntst) for kk in 1:(Ntst - 1)]
+        end
+    else
+        f0 = mod(t0, T) / T
+        f1 = mod(t1, T) / T
+        # first interval of the arc: down-snap of f0 to a boundary
+        g = clamp(searchsortedlast(τs, f0), 1, Ntst)
+        # last interval of the arc: up-snap (interval ending at, or containing, f1)
+        jlast = if f1 >= 1 - 1e-12 || f1 < 1e-12
+            Ntst
+        else
+            kk = searchsortedfirst(τs, f1)
+            jj = kk <= Ntst && abs(τs[kk] - f1) < 1e-10 ? max(1, kk - 1) : searchsortedlast(τs, f1)
+            clamp(jj, 1, Ntst)
+        end
+        kept = g <= jlast ? collect(g:jlast) : vcat(collect(g:Ntst), collect(1:jlast))
+        isempty(kept) && error("Empty homoclinic time window [t0, t1]. Check the values of `t0`, `t1`.")
+    end
+    K = length(kept)
+    @assert 1 <= K <= Ntst
+
+    a0 = τs[g]      # arc start (boundary), physical fraction
+    widths = [τs[idx + 1] - τs[idx] for idx in kept]
+    L = sum(widths) # arc length, fraction of the period
+    @assert L > 0
+
+    # ━━━━━━ keep the stored points lying on the arc, in arc order ━━━━━━
+    endlift = a0 + L
+    idxs = Int[]
+    lifts = Float64[]
+    for i in eachindex(ft)
+        li = ft[i] < a0 - 1e-12 ? ft[i] + 1 : ft[i]   # unwrapped fraction, starting at a0
+        if a0 - 1e-12 <= li <= endlift + 1e-12
+            push!(idxs, i)
+            push!(lifts, li)
+        end
+    end
+    perm = sortperm(lifts)
+    idxs = idxs[perm]
+    lifts = lifts[perm]
+    # drop the duplicated node at the seam (fraction 0 ≡ fraction 1)
+    uidx = Int[]
+    ulifts = Float64[]
+    for k in eachindex(idxs)
+        if isempty(uidx) || lifts[k] - ulifts[end] > 1e-10
+            push!(uidx, idxs[k])
+            push!(ulifts, lifts[k])
+        end
+    end
+    @assert length(uidx) == 1 + m * K "internal error: kept $(length(uidx)) nodes for $K collocation intervals"
+    return (; kept, uidx, ulifts, widths, a0, L)
+end
+
+"""
 $(TYPEDSIGNATURES)
 
-Generate a [`HomoclinicHyperbolicProblemPBC`](@ref) functional together with an initial guess, from a periodic orbit computed with the collocation method `coll`. The periodic orbit is used to locate the saddle point (point of minimal norm of the residual) and the points `x₀`, `x₁` close to the unstable/stable manifolds of the saddle.
+Generate a [`HomoclinicHyperbolicProblemPBC`](@ref) functional together with an initial guess from a periodic orbit computed with the collocation method `coll`.
+
+The guess is built by **extracting the time slices of the existing periodic-orbit solution**: a contiguous block of whole collocation intervals is selected and the corresponding stored points are reused as is — no polynomial re-interpolation is performed. A possibly *adapted* mesh (and therefore the resolution of peaked layers) is thus preserved.
 
 !!! tip "Adapted mesh"
-    In case of an adapted mesh, you can pass the `BK.POSavedSolutionAndState` solution directly in place of `x`, see the dedicated method below.
+    In case of an adapted mesh, you can pass the `BK.POSavedSolutionAndState` solution directly in place of `x`, see the dedicated method below. When using the `AbstractArray` method, the mesh of `coll` must be the mesh on which `x` was computed; this can be forced with the keyword `mesh`.
 
 ## Arguments
 - `coll::Collocation`: collocation discretization used to compute the periodic orbit
@@ -161,10 +248,11 @@ Generate a [`HomoclinicHyperbolicProblemPBC`](@ref) functional together with an 
 - `lensHom::BK.AllOpticTypes`: parameter axis (lens) used for the continuation of the homoclinic orbit
 
 ## Keyword arguments
-- `ϵ0 = 1e-5`, `ϵ1 = 1e-5`: distances of `x₀`, `x₁` to the saddle point
-- `t0 = 0`, `t1 = 0`: times in the periodic orbit corresponding to `x₀`, `x₁`. If both are `0`, they are detected automatically on a dense scan of the orbit, otherwise they overwrite `ϵ0, ϵ1`
+- `t0 = 0`, `t1 = 0`: absolute times in the periodic orbit delimiting the homoclinic interval. If both are `0`, the interval is obtained by removing the single collocation interval containing the point of the orbit closest to the saddle. Otherwise the whole collocation intervals covering the window `[t0, t1]` are kept.
+- `ϵ0 = 1e-5`, `ϵ1 = 1e-5`: kept for compatibility; the distances `ϵ0hom`, `ϵ1hom` are measured from the first/last kept points to the saddle point.
 - `maxT = Inf`: upper bound on the return time `T` of the homoclinic orbit
 - `freeparams = ((@optic _.ϵ0), (@optic _.T))`: free parameters used to define the homoclinic orbit in parameter space
+- `mesh = nothing`: fraction mesh (interval boundaries, length `Ntst + 1`) on which the solution `x` is defined. Automatically provided when `x` is a `BK.POSavedSolutionAndState`.
 - `verbose = false`: print some debugging information
 
 The extra `kwargs` are passed to the constructor of `::HomoclinicHyperbolicProblemPBC`.
@@ -181,56 +269,70 @@ function generate_hom_problem(coll::Collocation,
                               t0 = 0, t1 = 0,
                               maxT = Inf,
                               freeparams = ((@optic _.ϵ0), (@optic _.T)),
+                              mesh = nothing,
                               kw...)
     println("="^40)
     @assert coll.N > 0
-    T = getperiod(coll, x)
-    time = BK.get_times(coll) .* T
-    xc = BK.get_time_slices(coll, x)
-    indmax = size(xc, 2)
 
-    # convert solution to homogenous mesh
-    solpo = BK.POInterpolation(deepcopy(coll), x)
-
-    # find the saddle point as minimum of vector field norm
-    xc = BK.get_time_slices(coll, x)
-    ind_saddle = argmin(norm(BK.residual(coll.prob_vf, xc[:, i], pars)) for i = 1:indmax)
-    xsaddle = xc[:, ind_saddle]
-    tsaddle = time[ind_saddle]
-    BK._newton(coll.prob_vf, xsaddle, pars, NewtonPar(verbose = true))
-
-    if t1 == t0 == 0
-        # find x0 and x1 on the unstable / stable subspace
-        indUS = findfirst(norm(solpo(t) - xsaddle) > ϵ0 for t in time .+ tsaddle)
-        t0 = mod(time[indUS] + tsaddle, T)
-        x0 = solpo(t0)
-        indS = findlast(norm(solpo(t) - xsaddle) > ϵ1 for t in time .+ t0)
-        t1 = time[indS] + t0
-        x1 = solpo(t1)
-    else
-        x0 = solpo(t0)
-        x1 = solpo(t1)
-        indUS, indS = 0, 0
+    # working copy whose mesh is consistent with the solution `x`
+    _coll = deepcopy(coll)
+    if mesh !== nothing
+        BK.update_mesh!(_coll, mesh)
     end
 
-    # we put a uniform mesh in bvp even if coll is non uniform
-    n, m, Ntst = size(coll)
-    bvp = deepcopy(coll)
-    # bvp = BK.set_collocation_size(bvp, Ntst, m)
-    @reset bvp.update_section_every_step = 0
-    # BK.update_mesh!(bvp, LinRange{eltype(coll)}(0, 1, Ntst + 1) |> collect)
-    bvp = BK._set_params_in_po(bvp, pars)
+    T = getperiod(_coll, x)
+    xc = BK.get_time_slices(_coll, x)          # n x (1 + m*Ntst)
+    ft = BK.get_times(_coll)                   # node fractions, in [0, 1]
+    τs = BK.getmesh(_coll)                     # interval boundaries
+    n, m, Ntst = size(_coll)
+    P = size(xc, 2)
+    @assert P == 1 + m * Ntst
+    # ━━━━━━ saddle point located on the existing nodes only ━━━━━━
+    res = [norm(BK.residual(_coll.prob_vf, view(xc, :, i), pars)) for i in 1:P]
+    isaddle = argmin(res)
+    xs0 = xc[:, isaddle]
+    # refine: exact equilibrium used to seed the saddle unknown and the projectors
+    solS = BK._newton(_coll.prob_vf, xs0, pars, NewtonPar(;verbose))
+    xsaddle = BK.converged(solS) ? solS.u : xs0
+    # ━━━━━━ select the arc: contiguous whole intervals, extracted points only ━━━━━━
+    arc = _select_homoclinic_arc(τs, ft, m, Ntst, isaddle, t0, t1, T)
+    K = length(arc.kept)
+    Nkeep = length(arc.uidx)
+    a0 = arc.a0
+    L = arc.L
+    xflow = vec(xc[:, arc.uidx])              # extracted points, in arc order
+    λ = (arc.ulifts .- a0) ./ L               # arc fractions of the kept nodes
 
-    Thom = min(mod(t1 - t0, T), maxT)
-    xflow = mapreduce(t -> solpo(t0 + t * Thom), vcat, BK.get_times(bvp))
+    # reduced collocation discretization whose mesh follows the arc boundaries
+    bvp = deepcopy(_coll)
+    @reset bvp.update_section_every_step = 0
+    bvp = BK._set_params_in_po(bvp, pars)
+    if K != Ntst
+        bvp = BK.set_collocation_size(bvp, K, m)
+    end
+    arc_mesh_fractions = zeros(eltype(_coll), K + 1)
+    acc = zero(eltype(_coll))
+    for (c, w) in enumerate(arc.widths)
+        acc += w
+        arc_mesh_fractions[c + 1] = acc / L
+    end
+    BK.update_mesh!(bvp, arc_mesh_fractions)
+
+    # sanity check: the node times of `bvp` match the arc fractions of the extracted points
+    @assert maximum(abs, λ .- BK.get_times(bvp)) < 1e-6 "node time mismatch in the homoclinic guess"
+
+    Thom = min(L * T, maxT)
+    x0 = xflow[1:n]
+    x1 = xflow[end-n+1:end]
+
     BK.updatesection!(bvp, vcat(xflow, Thom), BK.getparams(bvp))
 
-    # create Homoclinic parameters
+    # distances measured from the extracted endpoints
     ϵ0hom = norm(x0 - xsaddle)
     ϵ1hom = norm(x1 - xsaddle)
 
     # define problem for Homoclinic functional
-    J = BK.jacobian(coll.prob_vf, xsaddle, pars)
+    J = BK.jacobian(_coll.prob_vf, xsaddle, pars)
     𝐇𝐨𝐦 = HomoclinicHyperbolicProblemPBC(bvp,
                                           lensHom,
                                           length(xsaddle),
@@ -238,17 +340,18 @@ function generate_hom_problem(coll::Collocation,
                                           ϵ0 = ϵ0hom,
                                           ϵ1 = ϵ1hom,
                                           T = Thom,
-                                          freeparams = freeparams,
+                                          freeparams,
                                           kw...)
 
     @assert BK.getparams(𝐇𝐨𝐦) == pars "Errors with setting the parameters. Please an issue on the website of BifurcationKit."
 
     if verbose
-        println("┌─ tsaddle  = $tsaddle")
-        println("├─ t0       = $t0")
-        println("├─ t1       = $t1")
-        println("├─ T        = $Thom")
-        println("└─ is,i0,i1 = $((ind_saddle, indUS, indS))")
+        println("┌─ isaddle      = $isaddle")
+        println("├─ kept         = $K intervals / $Nkeep nodes")
+        println("├─ t0 (frac)    = $a0")
+        println("├─ t1 (frac)    = $(mod(a0 + L, 1))")
+        println("├─ T            = $Thom")
+        println("└─ ϵ0hom, ϵ1hom = $((ϵ0hom, ϵ1hom))")
     end
 
     ns = 𝐇𝐨𝐦.nStable
@@ -276,6 +379,8 @@ function generate_hom_problem(coll::Collocation,
                               lensHom::BK.AllOpticTypes;
                               k...)
     coll2 = deepcopy(coll)
+    # enforce that the mesh of `coll2` matches the mesh on which `x.sol` is defined
     BK.update_mesh!(coll2, x._mesh)
-    generate_hom_problem(coll2, x.sol, pars, lensHom; k...)
+    BK.updatesection!(coll2, x.ϕ, nothing)
+    generate_hom_problem(coll2, x.sol, pars, lensHom; mesh = x._mesh, k...)
 end

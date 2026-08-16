@@ -338,7 +338,6 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
             oldu = vcat(z.u.x[1], T)
             adapt = BK.compute_error!(BK.get_discretization(𝐇𝐨𝐦), oldu;
                     verbosity = BK.get_discretization(𝐇𝐨𝐦).verbose_mesh_adapt,
-                    par = newpar,
                     K = BK.get_discretization(𝐇𝐨𝐦).K)
             z.u.x[1] .= oldu[1:end-1]
             if ~adapt.success

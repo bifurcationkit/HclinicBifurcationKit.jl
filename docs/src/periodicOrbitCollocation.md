@@ -27,7 +27,7 @@ $$\left\{\begin{aligned}
 
 The goal of this functionality is to adapt the mesh in order to minimize the discretization error. It is activated with `meshadapt = true` when constructing a `BifurcationKit.Collocation`; the number of allowed adaptation steps is controlled by the parameter `K` of the collocation.
 
-When mesh adaptation is used, the solutions stored on a branch are `BifurcationKit.POSavedSolutionAndState` which record the mesh and the phase condition. [`generate_hom_problem`](@ref) accepts such a solution directly, so that the adapted mesh and phase are properly restored before building the homoclinic problem.
+When mesh adaptation is used, the solutions stored on a branch are `BifurcationKit.POSavedSolutionAndState` which record the mesh and the phase condition. [`generate_hom_problem`](@ref) accepts such a solution directly, so that the adapted mesh and phase are properly restored before building the homoclinic problem. The initial guess is built by **extracting the time slices of the periodic orbit** (no polynomial re-interpolation): a contiguous block of whole collocation intervals is selected, thereby preserving the resolution of peaked layers provided by the adaptive mesh. When no time window is given, the single collocation interval containing the point closest to the saddle point is removed; otherwise the whole intervals covering the window `[t0, t1]` are kept.
 
 ## Usage
 
