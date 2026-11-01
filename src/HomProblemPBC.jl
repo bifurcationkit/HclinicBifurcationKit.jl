@@ -133,9 +133,9 @@ Compute projectors on stable / unstable linear manifolds for the jacobian `J`.
 """
 function get_S_U_stableSpaces(J)
     F = schur(J)
-    @assert abs(prod(F.values))>0 "This is not a saddle point"
     Qu0, nUnstable = _getSUSpace(F, >)
     Qs0, nStable   = _getSUSpace(F, <)
+    @assert nStable > 0 && nUnstable > 0 "This is not a saddle point with both stable and unstable directions"
     return (; Qs0, Qu0, nStable, nUnstable)
 end
 

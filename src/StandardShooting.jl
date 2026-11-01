@@ -273,6 +273,7 @@ function generate_hom_problem(sh::Shooting,
     ns = 𝐇𝐨𝐦.nStable
     nu = 𝐇𝐨𝐦.nUnstable
     p1 = BK._get(pars, lensHom)
+    @assert nu > 0
 
     xhom = ArrayPartition(xflow,
         xsaddle,

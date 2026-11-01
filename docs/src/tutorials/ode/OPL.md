@@ -64,7 +64,7 @@ scene = plot(br, br2)
 sn_br = continuation(br, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 80) ;
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
-	bothside = true,
+	bothside = Val(true),
 	)
 show(sn_br)
 ```
@@ -72,12 +72,12 @@ show(sn_br)
 ```@example TUTOPL
 hopf_br = continuation(br, 2, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
-	bothside = true,
+	bothside = Val(true),
 	)
 
 hopf_br2 = continuation(br2, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 140),
 	detect_codim2_bifurcation = 2,
-	bothside = true,
+	bothside = Val(true),
 	)
 show(hopf_br2)
 ```
