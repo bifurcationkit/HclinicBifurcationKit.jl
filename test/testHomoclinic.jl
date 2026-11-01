@@ -15,7 +15,7 @@ prob  = BK.BifurcationProblem(Fbt!, [0.01, 0.01], par, (@optic _.β1))
 opt_newton = NewtonPar(tol = 1e-9, max_iterations = 40)
 opts_br = ContinuationPar(dsmin = 0.001, dsmax = 0.01, ds = 0.01, p_max = 0.5, p_min = -0.5, detect_bifurcation = 3, nev = 2, newton_options = opt_newton, max_steps = 100, n_inversion = 8, tol_bisection_eigenvalue = 1e-8, dsmin_bisection = 1e-9)
 
-br = continuation(prob, PALC(), opts_br; bothside = true, verbosity = 0)
+br = continuation(prob, PALC(), opts_br; bothside = Val(true), verbosity = 0)
 
 sn_codim2 = continuation(br, 2, (@optic _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, max_steps = 40) ;
     detect_codim2_bifurcation = 2,
@@ -28,7 +28,7 @@ sn_codim2 = continuation(br, 2, (@optic _.β2), ContinuationPar(opts_br, detect_
 hopf_codim2 = continuation(br, 3, (@optic _.β2), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 40, max_bisection_steps = 25) ; plot = false, verbosity = 0,
     detect_codim2_bifurcation = 2,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 @test length(hopf_codim2.specialpoint) == 3

@@ -378,7 +378,9 @@ function BK.continuation(𝐇𝐨𝐦::HomoclinicHyperbolicProblemPBC,
             end
             return record
         end,
-        plot_solution = modify_hom_plot(BK.get_plot_backend(), 𝐇𝐨𝐦, BK.getparams(𝐇𝐨𝐦), lens; kwargs..., plot_solution = plot_solution),
+        plot_solution = modify_hom_plot(BK.get_plot_backend(), 𝐇𝐨𝐦, BK.getparams(𝐇𝐨𝐦), lens; kwargs..., plot_solution = plot_solution,
+        R01 = BifurcationKit.FiniteDifferences(),
+        ),
         )
 
     event = ContinuousEvent(16, testHom, false, ("NNS", "NSF", "NFF", "DRS", "DRU", "NDS", "NDU", "TLS", "TLU", "NCH", "SH", "BT", "OFU", "OFS", "IFU", "IFS"), 0)

@@ -23,9 +23,7 @@ z0 = zeros(6)
 prob = BK.BifurcationProblem(OPL!, z0, par_OPL, (@optic _.a); record_from_solution = recordFromSolution)
 
 opts_br = ContinuationPar(p_min = -1., p_max = 8., ds = 0.001, dsmax = 0.06, n_inversion = 6, nev = 6, plot_every_step = 20, max_steps = 100)
-br = continuation(prob, PALC(tangent = Secant()), opts_br;
-    bothside = false, normC = norminf)
-
+br = continuation(prob, PALC(tangent = Secant()), opts_br; normC = norminf)
 plot(br, plotfold=true)
 
 br2 = continuation(br, 1)
@@ -38,7 +36,7 @@ sn_br = continuation(br, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurc
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 plot(sn_br)
@@ -48,14 +46,14 @@ hopf_br = continuation(br, 2, (@optic _.b), ContinuationPar(opts_br, detect_bifu
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 hopf_br2 = continuation(br2, 1, (@optic _.b), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140),
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 plot(sn_br, vars = (:a, :b), branchlabel = ["SN"], )
@@ -65,7 +63,7 @@ ylims!(0,1.5)
 
 ####################################################################################################
 # plotting function
-function plotPO(x, p; k...)
+@views function plotPO(x, p; k...)
     xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     plot!(xtt.t, xtt[1,:]; markersize = 2, k...)
     plot!(xtt.t, xtt[6,:]; k...)
@@ -73,7 +71,7 @@ function plotPO(x, p; k...)
 end
 
 # record function
-function recordPO(x, p; k...)
+@views function recordPO(x, p; k...)
     xtt = BK.get_periodic_orbit(p.prob, x, p.p)
     period = BK.getperiod(p.prob, x, p.p)
     return (max = maximum(xtt[6,:]), min = minimum(xtt[6,:]), period = period, )
@@ -145,7 +143,7 @@ br_hom_c = continuation(
             setproperties(optc_hom, max_steps = 100, save_sol_every_step = 1, dsmax = 4e-2, plot_every_step = 10, p_max = 1.5);
     verbosity = 1, plot = true,
     # callback_newton = BK.cbMaxNorm(1e1),
-    # bothside = true,
+    # bothside = Val(true),
     normC = norminf,
     plot_solution = (x,p;k...) -> begin
         𝐇𝐨𝐦 = p.prob
@@ -158,9 +156,9 @@ br_hom_c = continuation(
     )
 
 plot(sn_br, vars = (:a, :b), branchlabel = "SN", )
-plot!(hopf_br, branchlabel = "AH₀", vars = (:a, :b))
+plot!(hopf_br, branchlabel = "AH₀",   vars = (:a, :b))
 plot!(hopf_br2, branchlabel = "AH₁₂", vars = (:a, :b))
-plot!(br_hom_c, branchlabel = "H₀", vars = (:a, :b))
+plot!(br_hom_c, branchlabel = "H₀",   vars = (:a, :b))
 ylims!(0,1.5)
 ####################################################################################################
 # same with shooting

@@ -22,7 +22,7 @@ prob = BK.BifurcationProblem(freire!, z0, par_freire, (@optic _.β); record_from
 
 opts_br = ContinuationPar(p_min = -1.4, p_max = 2.8, ds = 0.001, dsmax = 0.05, n_inversion = 6, max_bisection_steps = 25, nev = 3, max_steps = 2000)
 br = continuation(prob, PALC(tangent = Bordered()), opts_br;
-bothside = false, normC = norminf)
+bothside = Val(false), normC = norminf)
 
 plot(br, plotfold = true)
 ####################################################################################################
@@ -38,7 +38,7 @@ sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifur
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 plot(sn_br)
@@ -48,7 +48,7 @@ hopf_br = continuation(br, 4, (@optic _.ν), ContinuationPar(opts_br, detect_bif
     detect_codim2_bifurcation = 2,
     start_with_eigen = true,
     update_minaug_every_step = 1,
-    bothside = true,
+    bothside = Val(true),
     )
 
 plot(sn_br, hopf_br, ylims = (-0.1, 1.25))

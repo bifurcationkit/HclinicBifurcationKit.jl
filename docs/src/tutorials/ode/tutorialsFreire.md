@@ -66,14 +66,14 @@ sn_br = continuation(br, 2, (@optic _.ν), ContinuationPar(opts_br, detect_bifur
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
 	update_minaug_every_step = 1,
-	bothside = true,
+	bothside = Val(true),
 	)
 
 hopf_br = continuation(br, 4, (@optic _.ν), ContinuationPar(opts_br, detect_bifurcation = 1, save_sol_every_step = 1, max_steps = 140, dsmax = 0.02, n_inversion = 6),
 	detect_codim2_bifurcation = 2,
 	start_with_eigen = true,
 	update_minaug_every_step = 1,
-	bothside = true,
+	bothside = Val(true),
 	)
 
 plot(sn_br, hopf_br, ylims = (-0.1, 1.25))
@@ -86,7 +86,7 @@ We now continue the branch of homoclinic orbits starting from the Bogdanov–Tak
 Plotting function:
 
 ```@example TUTFREIRE
-function plotHom(x, p; k...)
+function plotHom(x, p; iter, state, k...)
 	𝐇𝐨𝐦 = p.prob
 	par0 = set(BK.getparams(𝐇𝐨𝐦), BK.getlens(𝐇𝐨𝐦), x.x[end][1])
 	par0 = set(par0, p.lens, p.p)
